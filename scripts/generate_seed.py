@@ -41,9 +41,18 @@ def ascii_clean(s: str) -> str:
 
 
 def sql_str(s: str) -> str:
-    """ASCII-clean, then single-quote escape for SQL string literals."""
-    s = ascii_clean(s)
-    return "'" + s.replace("'", "''") + "'"
+    """ASCII-clean, then DOLLAR-QUOTE the literal.
+
+    Dollar quoting ($tl$...$tl$) needs no escaping of single quotes, double
+    quotes, or backslashes, which makes the emitted SQL robust against editor
+    and copy/paste quirks. We also strip newlines so every literal stays on
+    one line.
+    """
+    s = ascii_clean(s).replace("\r", " ").replace("\n", " ")
+    tag = "$tl$"
+    if tag in s:  # never expected, but stay safe
+        tag = "$tlx$"
+    return f"{tag}{s}{tag}"
 
 
 def mcq(prompt, correct, distractors, rng):
@@ -752,23 +761,25 @@ def build_lesson_steps(name, teach, questions):
     ex = questions[0]
     if ex["type"] == "mcq":
         label = next(c["label"] for c in ex["choices"] if c["id"] == ex["answer"])
-        body = f"Try this one: {ex['prompt']}\n\nThe correct answer is \"{label}\"."
+        body = f"Try this one: {ex['prompt']}  The correct answer is \"{label}\"."
     else:
-        body = f"Try this one: {ex['prompt']}\n\nThe answer is {ex['answer']}."
-    steps.append({"type": "worked_example", "title": "Worked example", "body": body})
+        body = f"Try this one: {ex['prompt']}  The answer is {ex['answer']}."
+    steps.append({"type": "worked_example", "title": "Worked example",
+                  "body": ascii_clean(body)})
 
     # check step: use the first MCQ that isn't the example question, if any
     check = next((q for q in questions[1:] if q["type"] == "mcq"), None)
     if check:
         label = next(c["label"] for c in check["choices"] if c["id"] == check["answer"])
+        choices = [{"id": c["id"], "label": ascii_clean(c["label"])} for c in check["choices"]]
         steps.append({
             "type": "check",
             "title": "Quick check",
             "body": "Pick the best answer.",
-            "prompt": check["prompt"],
-            "choices": check["choices"],
+            "prompt": ascii_clean(check["prompt"]),
+            "choices": choices,
             "answer": check["answer"],
-            "explanation": f"The correct answer is \"{label}\".",
+            "explanation": ascii_clean(f"The correct answer is \"{label}\"."),
         })
     return steps
 
