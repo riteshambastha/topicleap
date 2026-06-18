@@ -33,7 +33,7 @@ export default async function WorksheetPage({
     .order("sort_order");
 
   return (
-    <main className="mx-auto w-full max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-3xl p-4 sm:p-6">
       <Link
         href={`/learn/${topicId}`}
         className="text-sm text-slate-500 hover:underline"

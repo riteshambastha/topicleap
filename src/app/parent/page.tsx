@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentParent } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -17,16 +18,18 @@ export default async function ParentDashboard() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
         <span className="font-bold text-indigo-700">TopicLeap · Parent</span>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-slate-500">{parent.email}</span>
+          <span className="hidden text-sm text-slate-500 sm:inline">
+            {parent.email}
+          </span>
           <LogoutButton />
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-3xl gap-6 p-6 md:grid-cols-2">
-        <Card className="h-fit">
+      <main className="mx-auto grid w-full max-w-5xl flex-1 gap-6 p-4 sm:p-6 lg:grid-cols-5">
+        <Card className="h-fit lg:col-span-3">
           <CardHeader>
             <CardTitle>Your learners</CardTitle>
           </CardHeader>
@@ -34,17 +37,26 @@ export default async function ParentDashboard() {
             {children && children.length > 0 ? (
               <ul className="grid gap-3">
                 {children.map((c) => (
-                  <li
-                    key={c.id}
-                    className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3"
-                  >
-                    <div>
-                      <p className="font-semibold">{c.display_name}</p>
-                      <p className="text-sm text-slate-500">
-                        @{c.username} · Grade {c.grade_level}
-                      </p>
-                    </div>
-                    <span className="text-2xl">🎒</span>
+                  <li key={c.id}>
+                    <Link
+                      href={`/parent/child/${c.id}`}
+                      className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 transition hover:border-indigo-400 hover:bg-indigo-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-2xl">
+                          🎒
+                        </span>
+                        <div>
+                          <p className="font-semibold">{c.display_name}</p>
+                          <p className="text-sm text-slate-500">
+                            @{c.username} · Grade {c.grade_level}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-semibold text-indigo-600">
+                        View report →
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -56,7 +68,7 @@ export default async function ParentDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="h-fit">
+        <Card className="h-fit lg:col-span-2">
           <CardHeader>
             <CardTitle>Add a learner</CardTitle>
           </CardHeader>

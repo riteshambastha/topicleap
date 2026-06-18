@@ -31,8 +31,8 @@ export default async function LearnHome() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-        <span className="font-bold text-indigo-700">TopicLeap</span>
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+        <span className="text-lg font-bold text-indigo-700">TopicLeap</span>
         <div className="flex items-center gap-3">
           <span className="text-sm text-slate-500">
             Hi, {child.display_name}! · Grade {child.grade_level}
@@ -41,8 +41,10 @@ export default async function LearnHome() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl p-6">
-        <h1 className="mb-6 text-2xl font-extrabold">What do you want to learn?</h1>
+      <main className="mx-auto w-full max-w-5xl flex-1 p-4 sm:p-6">
+        <h1 className="mb-6 text-2xl font-extrabold sm:text-3xl">
+          What do you want to learn?
+        </h1>
 
         {(subjects ?? []).map((subject) => {
           const subjectTopics = topicsBySubject.get(subject.id) ?? [];
@@ -52,7 +54,7 @@ export default async function LearnHome() {
               <h2 className="mb-3 text-lg font-bold text-slate-700">
                 {subject.name}
               </h2>
-              <div className="grid gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {subjectTopics.map((t) => (
                   <Link key={t.id} href={`/learn/${t.id}`}>
                     <Card className="transition hover:border-indigo-400 hover:shadow-md">

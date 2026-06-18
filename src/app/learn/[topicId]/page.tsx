@@ -62,19 +62,19 @@ export default async function TopicModePage({
   ].filter((m) => m.show);
 
   return (
-    <main className="mx-auto w-full max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-4xl p-4 sm:p-6">
       <Link href="/learn" className="text-sm text-slate-500 hover:underline">
         ← Back to topics
       </Link>
       <div className="mt-3 mb-6">
-        <h1 className="text-2xl font-extrabold">{topic.name}</h1>
+        <h1 className="text-2xl font-extrabold sm:text-3xl">{topic.name}</h1>
         {topic.description && (
           <p className="mt-1 text-slate-600">{topic.description}</p>
         )}
       </div>
 
       <p className="mb-3 font-semibold text-slate-700">How do you want to start?</p>
-      <div className="grid gap-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         {modes.map((m) => (
           <Link key={m.key} href={m.href}>
             <Card className="transition hover:border-indigo-400 hover:shadow-md">
