@@ -6,11 +6,31 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { LessonStep } from "@/lib/types";
 
-const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
-  explain: { label: "Learn", cls: "bg-sky-50 text-sky-700" },
-  worked_example: { label: "Example", cls: "bg-amber-50 text-amber-700" },
-  check: { label: "Quick check", cls: "bg-violet-50 text-violet-700" },
+const TYPE_STYLE: Record<
+  string,
+  { label: string; emoji: string; badge: string; accent: string }
+> = {
+  explain: {
+    label: "Learn",
+    emoji: "📘",
+    badge: "bg-sky-100 text-sky-800",
+    accent: "from-sky-400 to-blue-500",
+  },
+  worked_example: {
+    label: "Example",
+    emoji: "✏️",
+    badge: "bg-amber-100 text-amber-800",
+    accent: "from-amber-400 to-orange-500",
+  },
+  check: {
+    label: "Quick check",
+    emoji: "🧠",
+    badge: "bg-violet-100 text-violet-800",
+    accent: "from-violet-500 to-fuchsia-500",
+  },
 };
+
+const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
 export function LessonStepper({
   steps,
@@ -27,12 +47,14 @@ export function LessonStepper({
 
   const step = steps[i];
   const isLast = i === steps.length - 1;
-  const badge = TYPE_BADGE[step.type] ?? TYPE_BADGE.explain;
+  const style = TYPE_STYLE[step.type] ?? TYPE_STYLE.explain;
   const progress = Math.round(((i + 1) / steps.length) * 100);
 
   function next() {
     if (isLast) {
-      router.push(then === "worksheet" ? `/learn/${topicId}/worksheet` : `/learn/${topicId}`);
+      router.push(
+        then === "worksheet" ? `/learn/${topicId}/worksheet` : `/learn/${topicId}`,
+      );
       return;
     }
     setPicked(null);
@@ -47,45 +69,60 @@ export function LessonStepper({
   return (
     <div>
       {/* progress */}
-      <div className="mb-4">
-        <div className="mb-1 flex justify-between text-xs text-slate-500">
+      <div className="mb-5">
+        <div className="mb-1.5 flex justify-between text-sm font-semibold text-slate-500">
           <span>
             Step {i + 1} of {steps.length}
           </span>
           <span>{progress}%</span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+        <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
           <div
-            className="h-full rounded-full bg-indigo-600 transition-all"
+            className={`h-full rounded-full bg-gradient-to-r ${style.accent} transition-all`}
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
+      <Card className="overflow-hidden">
+        {/* colorful top strip */}
+        <div className={`h-2 w-full bg-gradient-to-r ${style.accent}`} />
+        <CardContent className="p-6 sm:p-8">
           <span
-            className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${badge.cls}`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-bold ${style.badge}`}
           >
-            {badge.label}
+            <span>{style.emoji}</span>
+            {style.label}
           </span>
-          <h2 className="mt-3 text-xl font-bold">{step.title}</h2>
-          <p className="mt-2 whitespace-pre-line leading-relaxed text-slate-700">
+          <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+            {step.title}
+          </h2>
+          <p className="mt-3 whitespace-pre-line text-lg leading-relaxed text-slate-700 sm:text-xl">
             {step.body}
           </p>
 
           {step.type === "check" && step.prompt && step.choices && (
-            <div className="mt-5 rounded-xl bg-slate-50 p-4">
-              <p className="font-semibold">{step.prompt}</p>
-              <div className="mt-3 grid gap-2">
-                {step.choices.map((c) => {
+            <div className="mt-6 rounded-2xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 p-5 sm:p-6">
+              <p className="text-xl font-extrabold text-violet-900 sm:text-2xl">
+                {step.prompt}
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {step.choices.map((c, idx) => {
                   const chosen = picked === c.id;
                   const isCorrect = c.id === step.answer;
-                  let cls = "border-slate-300 bg-white hover:bg-slate-100";
+                  let cls =
+                    "border-slate-200 bg-white hover:border-violet-400 hover:bg-violet-50";
+                  let chip = "bg-violet-100 text-violet-700";
                   if (picked) {
-                    if (isCorrect) cls = "border-emerald-500 bg-emerald-50";
-                    else if (chosen) cls = "border-red-400 bg-red-50";
-                    else cls = "border-slate-200 bg-white opacity-70";
+                    if (isCorrect) {
+                      cls = "border-emerald-500 bg-emerald-50";
+                      chip = "bg-emerald-500 text-white";
+                    } else if (chosen) {
+                      cls = "border-red-400 bg-red-50";
+                      chip = "bg-red-400 text-white";
+                    } else {
+                      cls = "border-slate-200 bg-white opacity-60";
+                    }
                   }
                   return (
                     <button
@@ -93,30 +130,37 @@ export function LessonStepper({
                       type="button"
                       disabled={!!picked}
                       onClick={() => setPicked(c.id)}
-                      className={`rounded-xl border px-4 py-2.5 text-left font-medium transition ${cls}`}
+                      className={`flex items-center gap-3 rounded-2xl border-2 px-5 py-4 text-left text-xl font-bold text-slate-800 shadow-sm transition ${cls}`}
                     >
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold ${chip}`}
+                      >
+                        {LETTERS[idx]}
+                      </span>
                       {c.label}
                     </button>
                   );
                 })}
               </div>
               {picked && (
-                <p
-                  className={`mt-3 text-sm font-medium ${
-                    picked === step.answer ? "text-emerald-700" : "text-red-700"
+                <div
+                  className={`mt-5 rounded-xl p-4 text-lg font-semibold ${
+                    picked === step.answer
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {picked === step.answer ? "✅ Nice!" : "Not quite — "}
+                  {picked === step.answer ? "🎉 Nice work! " : "🤔 Not quite — "}
                   {step.explanation}
-                </p>
+                </div>
               )}
             </div>
           )}
         </CardContent>
       </Card>
 
-      <div className="mt-5 flex justify-between">
-        <Button variant="outline" onClick={back} disabled={i === 0}>
+      <div className="mt-6 flex justify-between">
+        <Button variant="outline" size="lg" onClick={back} disabled={i === 0}>
           ← Back
         </Button>
         <Button onClick={next} size="lg">
