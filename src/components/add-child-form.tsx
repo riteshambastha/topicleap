@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const GRADES = [1, 2, 3, 4, 5, 6, 7, 8];
+import { GradePicker } from "@/components/grade-picker";
 
 export function AddChildForm() {
   const router = useRouter();
@@ -66,19 +65,8 @@ export function AddChildForm() {
         />
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="c-grade">Grade</Label>
-        <select
-          id="c-grade"
-          value={gradeLevel}
-          onChange={(e) => setGradeLevel(Number(e.target.value))}
-          className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-        >
-          {GRADES.map((g) => (
-            <option key={g} value={g}>
-              Grade {g}
-            </option>
-          ))}
-        </select>
+        <Label>Grade</Label>
+        <GradePicker value={gradeLevel} onChange={setGradeLevel} />
         <p className="text-xs text-slate-500">
           Grade 4 has content today; other grades are coming soon.
         </p>
