@@ -1059,12 +1059,13 @@ def build_lesson_steps(name, teach, questions):
     return steps
 
 
-def emit():
+def emit_curriculum(grade, topics):
+    """Emit an idempotent, non-destructive seed for one grade's curriculum."""
     out = []
     p = out.append
     p("-- =====================================================================")
-    p("-- TopicLeap - Grade 4 full curriculum seed (generated)")
-    p("-- 4 subjects x 10 topics, each with a lesson + 10-question worksheet.")
+    p(f"-- TopicLeap - Grade {grade} full curriculum seed (generated)")
+    p("-- 4 subjects x 10 topics, each with a lesson + worksheets of 5 questions.")
     p("-- Idempotent & non-destructive: re-running never duplicates and never")
     p("-- touches a topic that already has content.")
     p("-- Run AFTER 0001_init.sql, in the Supabase SQL Editor.")
@@ -1078,10 +1079,10 @@ def emit():
 
     # topic order within subject
     order_counter = {}
-    for subj_slug, tslug, name, std, teach, source in TOPICS:
+    for subj_slug, tslug, name, std, teach, source in topics:
         order_counter[subj_slug] = order_counter.get(subj_slug, 0) + 1
         torder = order_counter[subj_slug]
-        rng = random.Random(tslug)
+        rng = random.Random(f"g{grade}-{tslug}")
         questions = make_questions(source, rng)
         steps = build_lesson_steps(name, teach, questions)
         steps_json = json.dumps(steps, ensure_ascii=True)
@@ -1092,7 +1093,7 @@ def emit():
         p("insert into public.topics (subject_id, slug, name, description, "
           "grade_level, standard_code, sort_order)")
         p(f"select s.id, {sql_str(tslug)}, {sql_str(name)}, {sql_str(desc)}, "
-          f"{GRADE}, {sql_str(std)}, {torder}")
+          f"{grade}, {sql_str(std)}, {torder}")
         p(f"from public.subjects s where s.slug = {sql_str(subj_slug)}")
         p("on conflict (subject_id, grade_level, slug) do update set "
           "name = excluded.name, description = excluded.description, "
@@ -1100,11 +1101,11 @@ def emit():
 
         # lesson (guarded)
         p("insert into public.lessons (topic_id, title, grade_level, steps, sort_order)")
-        p(f"select t.id, {sql_str('Learn: ' + name)}, {GRADE}, "
+        p(f"select t.id, {sql_str('Learn: ' + name)}, {grade}, "
           f"{sql_str(steps_json)}::jsonb, 0")
         p("from public.topics t join public.subjects s on s.id = t.subject_id")
         p(f"where s.slug = {sql_str(subj_slug)} and t.slug = {sql_str(tslug)} "
-          f"and t.grade_level = {GRADE}")
+          f"and t.grade_level = {grade}")
         p("and not exists (select 1 from public.lessons l where l.topic_id = t.id);")
 
         # Split the topic's questions into worksheets of WORKSHEET_SIZE,
@@ -1117,10 +1118,10 @@ def emit():
 
             # worksheet (guarded by topic + title)
             p("insert into public.worksheets (topic_id, title, grade_level, sort_order)")
-            p(f"select t.id, {sql_str(ws_title)}, {GRADE}, {c}")
+            p(f"select t.id, {sql_str(ws_title)}, {grade}, {c}")
             p("from public.topics t join public.subjects s on s.id = t.subject_id")
             p(f"where s.slug = {sql_str(subj_slug)} and t.slug = {sql_str(tslug)} "
-              f"and t.grade_level = {GRADE}")
+              f"and t.grade_level = {grade}")
             p(f"and not exists (select 1 from public.worksheets w "
               f"where w.topic_id = t.id and w.title = {sql_str(ws_title)});")
 
@@ -1130,17 +1131,21 @@ def emit():
                                if q["choices"] else "null")
                 p("insert into public.questions (worksheet_id, grade_level, "
                   "question_type, prompt, choices, correct_answer, points, sort_order)")
-                p(f"select w.id, {GRADE}, {sql_str(q['type'])}, {sql_str(q['prompt'])}, "
+                p(f"select w.id, {grade}, {sql_str(q['type'])}, {sql_str(q['prompt'])}, "
                   f"{choices_sql}, {sql_str(str(q['answer']))}, 10, {li}")
                 p("from public.worksheets w join public.topics t on t.id = w.topic_id "
                   "join public.subjects s on s.id = t.subject_id")
                 p(f"where s.slug = {sql_str(subj_slug)} and t.slug = {sql_str(tslug)} "
-                  f"and t.grade_level = {GRADE} and w.title = {sql_str(ws_title)}")
+                  f"and t.grade_level = {grade} and w.title = {sql_str(ws_title)}")
                 p(f"and not exists (select 1 from public.questions q "
                   f"where q.worksheet_id = w.id and q.sort_order = {li});")
             p("")
 
     return "\n".join(out)
+
+
+def emit():
+    return emit_curriculum(GRADE, TOPICS)
 
 
 if __name__ == "__main__":
