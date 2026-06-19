@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
+import { ConfettiBurst } from "@/components/confetti-burst";
 import type { LessonStep } from "@/lib/types";
 
 const TYPE_STYLE: Record<
@@ -45,6 +46,12 @@ export function LessonStepper({
   const router = useRouter();
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
+  const [celebrate, setCelebrate] = useState(0);
+
+  function choose(choiceId: string, correctId?: string) {
+    setPicked(choiceId);
+    if (choiceId === correctId) setCelebrate((c) => c + 1);
+  }
 
   const step = steps[i];
   const isLast = i === steps.length - 1;
@@ -69,6 +76,7 @@ export function LessonStepper({
 
   return (
     <div>
+      <ConfettiBurst trigger={celebrate} originY="30%" />
       {/* progress */}
       <div className="mb-5">
         <div className="mb-1.5 flex justify-between text-sm font-semibold text-slate-500">
@@ -133,13 +141,14 @@ export function LessonStepper({
                       cls = "border-slate-200 bg-white opacity-60";
                     }
                   }
+                  const popped = !!picked && chosen && isCorrect;
                   return (
                     <button
                       key={c.id}
                       type="button"
                       disabled={!!picked}
-                      onClick={() => setPicked(c.id)}
-                      className={`flex items-center gap-3 rounded-2xl border-2 px-5 py-4 text-left text-xl font-bold text-slate-800 shadow-sm transition ${cls}`}
+                      onClick={() => choose(c.id, step.answer)}
+                      className={`flex items-center gap-3 rounded-2xl border-2 px-5 py-4 text-left text-xl font-bold text-slate-800 shadow-sm transition ${cls} ${popped ? "tl-pop" : ""}`}
                     >
                       <span
                         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold ${chip}`}

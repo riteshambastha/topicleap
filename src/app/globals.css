@@ -32,6 +32,27 @@ body {
 .tl-floaty-slow { animation: tl-floaty 12s ease-in-out infinite; }
 .tl-twinkle { animation: tl-twinkle 5s ease-in-out infinite; }
 
+/* gentle confetti pop on a correct answer */
+@keyframes tl-confetti {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% {
+    transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.9);
+    opacity: 0;
+  }
+}
+.tl-confetti-piece {
+  animation: tl-confetti 1000ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+/* soft pop when a choice is confirmed correct */
+@keyframes tl-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.tl-pop { animation: tl-pop 360ms ease-out; }
+
 @media (prefers-reduced-motion: reduce) {
-  .tl-blob, .tl-floaty, .tl-floaty-slow, .tl-twinkle { animation: none; }
+  .tl-blob, .tl-floaty, .tl-floaty-slow, .tl-twinkle,
+  .tl-confetti-piece, .tl-pop { animation: none; }
 }

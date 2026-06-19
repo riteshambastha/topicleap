@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ListenButton } from "@/components/listen-button";
+import { ConfettiBurst } from "@/components/confetti-burst";
 import type { GradeResponse, PublicQuestion } from "@/lib/types";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -42,6 +43,7 @@ export function WorksheetRunner({
   const [result, setResult] = useState<GradeResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [celebrate, setCelebrate] = useState(0);
 
   const answeredCount = useMemo(
     () => questions.filter((q) => (responses[q.id] ?? "").trim().length > 0).length,
@@ -73,7 +75,9 @@ export function WorksheetRunner({
       setError(data.error ?? "Could not grade worksheet.");
       return;
     }
-    setResult(data as GradeResponse);
+    const graded = data as GradeResponse;
+    setResult(graded);
+    if (graded.correctCount > 0) setCelebrate((c) => c + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -88,6 +92,7 @@ export function WorksheetRunner({
 
     return (
       <div>
+        <ConfettiBurst trigger={celebrate} originY="25%" />
         <div className={`mb-6 overflow-hidden rounded-3xl bg-gradient-to-br ${heroGrad} p-8 text-center text-white shadow`}>
           <p className="text-sm font-semibold uppercase tracking-widest text-white/80">
             {cheer}
