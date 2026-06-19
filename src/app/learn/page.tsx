@@ -69,9 +69,15 @@ export default async function LearnHome() {
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
         <span className="text-lg font-bold text-indigo-700">TopicLeap</span>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-slate-500">
+          <span className="hidden text-sm text-slate-500 sm:inline">
             Hi, {child.display_name}! · Grade {child.grade_level}
           </span>
+          <Link
+            href="/learn/progress"
+            className="rounded-xl bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
+          >
+            📊 My Progress
+          </Link>
           <LogoutButton />
         </div>
       </header>

@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentChild } from "@/lib/auth";
 import { isAnswerCorrect } from "@/lib/grade";
+import { regenerateSummary } from "@/lib/summary";
 import type { GradeResponse, GradedQuestionResult } from "@/lib/types";
 
 /**
@@ -121,6 +122,16 @@ export async function POST(
       reason: `Worksheet: ${correctCount}/${questions.length} correct`,
     });
   }
+
+  // Refresh the kid's motivational summary AFTER the response is sent,
+  // so grading stays fast. Best-effort; failures are swallowed.
+  after(async () => {
+    await regenerateSummary(createAdminClient(), {
+      id: child.id,
+      display_name: child.display_name,
+      grade_level: child.grade_level,
+    });
+  });
 
   const payload: GradeResponse = {
     attemptId: attempt.id,

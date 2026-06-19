@@ -129,6 +129,9 @@ export function WorksheetRunner({
           <Button variant="outline" size="lg" onClick={() => router.push(`/learn/${topicId}`)}>
             Back to topic
           </Button>
+          <Button variant="success" size="lg" onClick={() => router.push("/learn/progress")}>
+            📊 See my progress
+          </Button>
           <Button
             size="lg"
             onClick={() => {
