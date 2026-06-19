@@ -3,8 +3,11 @@ import { redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getProgress } from "@/lib/progress";
+import { topicIcon } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
 import { GlobalSearch, type SearchItem } from "@/components/global-search";
+
+type LessonStepLite = { title?: string; body?: string; prompt?: string };
 
 const THEME: Record<string, { emoji: string; grad: string; soft: string }> = {
   math: { emoji: "🔢", grad: "from-indigo-500 to-violet-500", soft: "bg-indigo-50" },
@@ -19,18 +22,31 @@ export default async function LearnHome() {
   if (!child) redirect("/kids");
 
   const supabase = await createClient();
-  const [{ data: subjects }, { data: topics }] = await Promise.all([
-    supabase.from("subjects").select("id, slug, name").order("sort_order"),
-    supabase
-      .from("topics")
-      .select("id, name, subject_id, standard_code")
-      .eq("grade_level", child.grade_level)
-      .order("sort_order"),
-  ]);
+  const [{ data: subjects }, { data: topics }, { data: lessons }] =
+    await Promise.all([
+      supabase.from("subjects").select("id, slug, name").order("sort_order"),
+      supabase
+        .from("topics")
+        .select("id, slug, name, subject_id, standard_code")
+        .eq("grade_level", child.grade_level)
+        .order("sort_order"),
+      supabase.from("lessons").select("topic_id, steps"),
+    ]);
 
   const { completedTopics } = await getProgress(supabase, child.id);
 
+  // Build a searchable blob of lesson text per topic.
+  const lessonText = new Map<string, string>();
+  for (const l of lessons ?? []) {
+    const steps = (l.steps ?? []) as LessonStepLite[];
+    const text = steps
+      .map((s) => `${s.title ?? ""} ${s.body ?? ""} ${s.prompt ?? ""}`)
+      .join(" ");
+    lessonText.set(l.topic_id, text);
+  }
+
   const subjectName = new Map((subjects ?? []).map((s) => [s.id, s.name]));
+  const subjectSlug = new Map((subjects ?? []).map((s) => [s.id, s.slug]));
   const topicsBySubject = new Map<string, NonNullable<typeof topics>>();
   for (const t of topics ?? []) {
     const arr = topicsBySubject.get(t.subject_id) ?? [];
@@ -43,6 +59,8 @@ export default async function LearnHome() {
     name: t.name,
     subject: subjectName.get(t.subject_id) ?? "",
     standard: t.standard_code,
+    icon: topicIcon(t.slug, subjectSlug.get(t.subject_id)),
+    keywords: lessonText.get(t.id) ?? "",
     completed: completedTopics.has(t.id),
   }));
 

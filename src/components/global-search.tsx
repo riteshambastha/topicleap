@@ -8,6 +8,9 @@ export interface SearchItem {
   name: string;
   subject: string;
   standard: string | null;
+  icon: string;
+  /** searchable lesson text (not displayed) */
+  keywords: string;
   completed: boolean;
 }
 
@@ -19,7 +22,7 @@ export function GlobalSearch({ items }: { items: SearchItem[] }) {
     if (!query) return [];
     return items
       .filter((it) =>
-        [it.name, it.subject, it.standard ?? ""]
+        [it.name, it.subject, it.standard ?? "", it.keywords]
           .join(" ")
           .toLowerCase()
           .includes(query),
@@ -53,9 +56,12 @@ export function GlobalSearch({ items }: { items: SearchItem[] }) {
                 <li key={it.topicId}>
                   <Link
                     href={`/learn/${it.topicId}`}
-                    className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 last:border-0 hover:bg-indigo-50"
+                    className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-0 hover:bg-indigo-50"
                   >
-                    <span className="min-w-0">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl">
+                      {it.icon}
+                    </span>
+                    <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold text-slate-800">
                         {it.name}
                       </span>

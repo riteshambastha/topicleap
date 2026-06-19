@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getProgress } from "@/lib/progress";
+import { topicIcon, subjectGradient } from "@/lib/topic-icons";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default async function TopicModePage({
@@ -17,10 +18,12 @@ export default async function TopicModePage({
   const supabase = await createClient();
   const { data: topic } = await supabase
     .from("topics")
-    .select("id, name, description, standard_code, subject_id")
+    .select("id, slug, name, description, standard_code, subject_id, subjects(slug)")
     .eq("id", topicId)
     .maybeSingle();
   if (!topic) notFound();
+
+  const subjSlug = (topic.subjects as unknown as { slug: string } | null)?.slug;
 
   const { data: lesson } = await supabase
     .from("lessons")
@@ -84,7 +87,13 @@ export default async function TopicModePage({
         ← Back to topics
       </Link>
 
-      <div className="mt-3 mb-6">
+      <div className="mt-3 mb-6 flex items-start gap-4">
+        <div
+          className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${subjectGradient(subjSlug)} text-4xl shadow-sm`}
+        >
+          {topicIcon(topic.slug, subjSlug)}
+        </div>
+        <div>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-extrabold sm:text-3xl">{topic.name}</h1>
           {topic.standard_code && (
@@ -106,6 +115,7 @@ export default async function TopicModePage({
             📝 {questionCount} practice questions
           </p>
         )}
+        </div>
       </div>
 
       <p className="mb-3 font-semibold text-slate-700">How do you want to start?</p>

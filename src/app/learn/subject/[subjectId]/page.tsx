@@ -3,14 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getProgress } from "@/lib/progress";
+import { topicIcon, subjectGradient } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
-
-const THEME: Record<string, string> = {
-  math: "from-indigo-500 to-violet-500",
-  science: "from-emerald-500 to-teal-500",
-  reading: "from-sky-500 to-blue-500",
-  writing: "from-amber-500 to-orange-500",
-};
 
 export default async function SubjectPage({
   params,
@@ -31,13 +25,13 @@ export default async function SubjectPage({
 
   const { data: topics } = await supabase
     .from("topics")
-    .select("id, name, description, standard_code")
+    .select("id, slug, name, description, standard_code")
     .eq("subject_id", subjectId)
     .eq("grade_level", child.grade_level)
     .order("sort_order");
 
   const { completedTopics, bestByTopic } = await getProgress(supabase, child.id);
-  const grad = THEME[subject.slug] ?? "from-slate-500 to-slate-600";
+  const grad = subjectGradient(subject.slug);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -61,7 +55,7 @@ export default async function SubjectPage({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {(topics ?? []).map((t, i) => {
+          {(topics ?? []).map((t) => {
             const done = completedTopics.has(t.id);
             const best = bestByTopic.get(t.id);
             return (
@@ -71,12 +65,17 @@ export default async function SubjectPage({
                     done ? "border-teal-400 bg-teal-50" : "border-slate-200 bg-white"
                   }`}
                 >
-                  <div
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
-                      done ? "bg-teal-500 text-white" : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {done ? "✓" : i + 1}
+                  <div className="relative shrink-0">
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${grad} text-2xl shadow-sm`}
+                    >
+                      {topicIcon(t.slug, subject.slug)}
+                    </div>
+                    {done && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white ring-2 ring-white">
+                        ✓
+                      </span>
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
