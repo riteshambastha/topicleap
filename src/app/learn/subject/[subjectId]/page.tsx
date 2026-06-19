@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getProgress, isTopicComplete } from "@/lib/progress";
+import { getViewGrade } from "@/lib/view-grade";
 import { topicIcon, subjectGradient } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
 
@@ -23,11 +24,12 @@ export default async function SubjectPage({
     .maybeSingle();
   if (!subject) notFound();
 
+  const viewGrade = await getViewGrade(child.grade_level);
   const { data: topics } = await supabase
     .from("topics")
     .select("id, slug, name, description, standard_code")
     .eq("subject_id", subjectId)
-    .eq("grade_level", child.grade_level)
+    .eq("grade_level", viewGrade)
     .order("sort_order");
 
   const topicIds = (topics ?? []).map((t) => t.id);

@@ -131,7 +131,9 @@ export default async function ProgressPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           {/* per-subject progress */}
           <section>
-            <h2 className="mb-3 text-lg font-bold text-slate-700">Subjects</h2>
+            <h2 className="mb-3 text-lg font-bold text-slate-700">
+              Subjects · Grade {child.grade_level}
+            </h2>
             <div className="grid gap-3">
               {perSubject.map((s) => (
                 <Card key={s.name}>

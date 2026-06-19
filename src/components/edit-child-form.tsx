@@ -86,6 +86,10 @@ export function EditChildForm({
       <div className="grid gap-1.5">
         <Label>Grade</Label>
         <GradePicker value={gradeLevel} onChange={setGradeLevel} />
+        <p className="text-xs text-slate-500">
+          Changing the grade keeps all of {initialDisplayName}&apos;s progress and
+          points — it just changes which grade&apos;s topics they see at home.
+        </p>
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="e-pin">New PIN (optional)</Label>

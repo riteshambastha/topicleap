@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getProgress, isTopicComplete } from "@/lib/progress";
+import { getViewGrade } from "@/lib/view-grade";
 import { topicIcon } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
 import { GlobalSearch, type SearchItem } from "@/components/global-search";
+import { GradeExplorer } from "@/components/grade-explorer";
 
 type LessonStepLite = { title?: string; body?: string; prompt?: string };
 
@@ -22,20 +24,32 @@ export default async function LearnHome() {
   if (!child) redirect("/kids");
 
   const supabase = await createClient();
-  const [{ data: subjects }, { data: topics }, { data: lessons }, { data: wsRows }] =
-    await Promise.all([
-      supabase.from("subjects").select("id, slug, name").order("sort_order"),
-      supabase
-        .from("topics")
-        .select("id, slug, name, subject_id, standard_code")
-        .eq("grade_level", child.grade_level)
-        .order("sort_order"),
-      supabase.from("lessons").select("topic_id, steps"),
-      supabase
-        .from("worksheets")
-        .select("id, topic_id, topics!inner(grade_level)")
-        .eq("topics.grade_level", child.grade_level),
-    ]);
+  const viewGrade = await getViewGrade(child.grade_level);
+
+  const [
+    { data: subjects },
+    { data: topics },
+    { data: lessons },
+    { data: wsRows },
+    { data: gradeRows },
+  ] = await Promise.all([
+    supabase.from("subjects").select("id, slug, name").order("sort_order"),
+    supabase
+      .from("topics")
+      .select("id, slug, name, subject_id, standard_code")
+      .eq("grade_level", viewGrade)
+      .order("sort_order"),
+    supabase.from("lessons").select("topic_id, steps"),
+    supabase
+      .from("worksheets")
+      .select("id, topic_id, topics!inner(grade_level)")
+      .eq("topics.grade_level", viewGrade),
+    supabase.from("topics").select("grade_level"),
+  ]);
+
+  const availableGrades = Array.from(
+    new Set((gradeRows ?? []).map((r) => r.grade_level as number)),
+  ).sort((a, b) => a - b);
 
   const { completedWorksheets } = await getProgress(supabase, child.id);
 
@@ -99,13 +113,29 @@ export default async function LearnHome() {
       </header>
 
       <main className="mx-auto w-full max-w-5xl flex-1 p-4 sm:p-6">
-        <div className="mb-7">
+        <div className="mb-5">
           <GlobalSearch items={searchItems} />
         </div>
 
+        <div className="mb-6">
+          <GradeExplorer
+            homeGrade={child.grade_level}
+            viewGrade={viewGrade}
+            availableGrades={availableGrades}
+          />
+        </div>
+
         <h1 className="mb-5 text-2xl font-extrabold sm:text-3xl">
-          Pick a subject
+          {viewGrade === child.grade_level
+            ? "Pick a subject"
+            : `Exploring Grade ${viewGrade}`}
         </h1>
+
+        {(topics ?? []).length === 0 && (
+          <div className="mb-6 rounded-2xl border border-white/60 bg-white/70 p-6 text-center text-slate-600 backdrop-blur">
+            No topics for Grade {viewGrade} yet — more grades are coming soon! 🚀
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {(subjects ?? []).map((s) => {
