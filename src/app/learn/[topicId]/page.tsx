@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getProgress } from "@/lib/progress";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default async function TopicModePage({
@@ -16,7 +17,7 @@ export default async function TopicModePage({
   const supabase = await createClient();
   const { data: topic } = await supabase
     .from("topics")
-    .select("id, name, description, standard_code")
+    .select("id, name, description, standard_code, subject_id")
     .eq("id", topicId)
     .maybeSingle();
   if (!topic) notFound();
@@ -37,6 +38,19 @@ export default async function TopicModePage({
     .limit(1)
     .maybeSingle();
 
+  let questionCount = 0;
+  if (worksheet) {
+    const { count } = await supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("worksheet_id", worksheet.id);
+    questionCount = count ?? 0;
+  }
+
+  const { completedTopics, bestByTopic } = await getProgress(supabase, child.id);
+  const done = completedTopics.has(topicId);
+  const best = bestByTopic.get(topicId);
+
   const modes = [
     {
       key: "learn",
@@ -47,7 +61,7 @@ export default async function TopicModePage({
     },
     {
       key: "learn-worksheet",
-      title: "📘➕📝 Learn + Worksheet",
+      title: "📘 ➕ 📝 Learn + Worksheet",
       blurb: "Do the lesson, then jump straight into practice.",
       href: `/learn/${topicId}/lesson?then=worksheet`,
       show: !!lesson && !!worksheet,
@@ -63,13 +77,34 @@ export default async function TopicModePage({
 
   return (
     <main className="mx-auto w-full max-w-4xl p-4 sm:p-6">
-      <Link href="/learn" className="text-sm text-slate-500 hover:underline">
+      <Link
+        href={`/learn/subject/${topic.subject_id}`}
+        className="text-sm text-slate-500 hover:underline"
+      >
         ← Back to topics
       </Link>
+
       <div className="mt-3 mb-6">
-        <h1 className="text-2xl font-extrabold sm:text-3xl">{topic.name}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-extrabold sm:text-3xl">{topic.name}</h1>
+          {topic.standard_code && (
+            <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+              {topic.standard_code}
+            </span>
+          )}
+          {done && (
+            <span className="rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-700">
+              ✓ Completed{best != null ? ` · best ${best}%` : ""}
+            </span>
+          )}
+        </div>
         {topic.description && (
           <p className="mt-1 text-slate-600">{topic.description}</p>
+        )}
+        {questionCount > 0 && (
+          <p className="mt-2 text-sm font-medium text-slate-500">
+            📝 {questionCount} practice questions
+          </p>
         )}
       </div>
 
@@ -77,7 +112,7 @@ export default async function TopicModePage({
       <div className="grid gap-3 sm:grid-cols-3">
         {modes.map((m) => (
           <Link key={m.key} href={m.href}>
-            <Card className="transition hover:border-indigo-400 hover:shadow-md">
+            <Card className="h-full transition hover:border-indigo-400 hover:shadow-md">
               <CardContent className="p-5">
                 <p className="text-lg font-bold">{m.title}</p>
                 <p className="mt-1 text-sm text-slate-500">{m.blurb}</p>
