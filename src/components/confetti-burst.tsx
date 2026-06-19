@@ -22,9 +22,11 @@ interface Piece {
 export function ConfettiBurst({
   trigger,
   originY = "35%",
+  count = 28,
 }: {
   trigger: number;
   originY?: string;
+  count?: number;
 }) {
   const [pieces, setPieces] = useState<Piece[]>([]);
 
@@ -36,7 +38,7 @@ export function ConfettiBurst({
     ) {
       return;
     }
-    const n = 28;
+    const n = count;
     const arr: Piece[] = Array.from({ length: n }, (_, i) => ({
       id: trigger * 1000 + i,
       tx: (Math.random() * 2 - 1) * 240,
@@ -50,6 +52,7 @@ export function ConfettiBurst({
     setPieces(arr);
     const t = setTimeout(() => setPieces([]), 1300);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger]);
 
   if (pieces.length === 0) return null;

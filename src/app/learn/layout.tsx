@@ -3,6 +3,8 @@
  * soft floating color blobs + drifting doodles. Pure CSS, lightweight, and
  * disabled automatically for users who prefer reduced motion.
  */
+import { SoundToggle } from "@/components/sound-toggle";
+
 export default function LearnLayout({
   children,
 }: {
@@ -10,6 +12,7 @@ export default function LearnLayout({
 }) {
   return (
     <div className="relative flex flex-1 flex-col">
+      <SoundToggle />
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ListenButton } from "@/components/listen-button";
 import { ConfettiBurst } from "@/components/confetti-burst";
+import { playCelebrate } from "@/lib/sound";
 import type { GradeResponse, PublicQuestion } from "@/lib/types";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -77,7 +78,13 @@ export function WorksheetRunner({
     }
     const graded = data as GradeResponse;
     setResult(graded);
-    if (graded.correctCount > 0) setCelebrate((c) => c + 1);
+    if (graded.correctCount > 0) {
+      setCelebrate((c) => c + 1);
+      const p = graded.totalQuestions
+        ? (graded.correctCount / graded.totalQuestions) * 100
+        : 0;
+      playCelebrate(p >= 100 ? 4 : p >= 80 ? 3 : p >= 50 ? 2 : 1);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -92,7 +99,11 @@ export function WorksheetRunner({
 
     return (
       <div>
-        <ConfettiBurst trigger={celebrate} originY="25%" />
+        <ConfettiBurst
+          trigger={celebrate}
+          originY="25%"
+          count={Math.round(18 + (pct / 100) * 52)}
+        />
         <div className={`mb-6 overflow-hidden rounded-3xl bg-gradient-to-br ${heroGrad} p-8 text-center text-white shadow`}>
           <p className="text-sm font-semibold uppercase tracking-widest text-white/80">
             {cheer}

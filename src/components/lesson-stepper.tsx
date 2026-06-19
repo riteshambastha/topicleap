@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
 import { ConfettiBurst } from "@/components/confetti-burst";
+import { playCorrect } from "@/lib/sound";
 import type { LessonStep } from "@/lib/types";
 
 const TYPE_STYLE: Record<
@@ -50,7 +51,10 @@ export function LessonStepper({
 
   function choose(choiceId: string, correctId?: string) {
     setPicked(choiceId);
-    if (choiceId === correctId) setCelebrate((c) => c + 1);
+    if (choiceId === correctId) {
+      setCelebrate((c) => c + 1);
+      playCorrect();
+    }
   }
 
   const step = steps[i];
