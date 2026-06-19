@@ -82,7 +82,7 @@ export default async function LearnHome() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-white/60 bg-white/75 px-4 py-4 backdrop-blur sm:px-6">
         <span className="text-lg font-bold text-indigo-700">TopicLeap</span>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-slate-500 sm:inline">

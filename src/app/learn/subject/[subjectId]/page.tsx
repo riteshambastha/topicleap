@@ -56,7 +56,7 @@ export default async function SubjectPage({
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-white/60 bg-white/75 px-4 py-4 backdrop-blur sm:px-6">
         <Link href="/learn" className="text-lg font-bold text-indigo-700">
           ← TopicLeap
         </Link>

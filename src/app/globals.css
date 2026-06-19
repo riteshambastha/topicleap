@@ -10,3 +10,28 @@ body {
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
 }
+
+/* ---- Playful, lightweight animations for the kid-facing pages ---- */
+@keyframes tl-blob {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(24px, -32px) scale(1.08); }
+  66% { transform: translate(-18px, 22px) scale(0.94); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes tl-floaty {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-18px) rotate(6deg); }
+}
+@keyframes tl-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.15); }
+}
+
+.tl-blob { animation: tl-blob 20s ease-in-out infinite; }
+.tl-floaty { animation: tl-floaty 8s ease-in-out infinite; }
+.tl-floaty-slow { animation: tl-floaty 12s ease-in-out infinite; }
+.tl-twinkle { animation: tl-twinkle 5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-blob, .tl-floaty, .tl-floaty-slow, .tl-twinkle { animation: none; }
+}
