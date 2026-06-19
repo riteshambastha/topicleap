@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ListenButton } from "@/components/listen-button";
 import type { LessonStep } from "@/lib/types";
 
 const TYPE_STYLE: Record<
@@ -103,9 +104,17 @@ export function LessonStepper({
 
           {step.type === "check" && step.prompt && step.choices && (
             <div className="mt-6 rounded-2xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 p-5 sm:p-6">
-              <p className="text-xl font-extrabold text-violet-900 sm:text-2xl">
-                {step.prompt}
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-xl font-extrabold text-violet-900 sm:text-2xl">
+                  {step.prompt}
+                </p>
+                <ListenButton
+                  text={`${step.prompt}. ${(step.choices ?? [])
+                    .map((c, ci) => `Option ${["A", "B", "C", "D", "E", "F"][ci]}: ${c.label}`)
+                    .join(". ")}`}
+                  className="shrink-0"
+                />
+              </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {step.choices.map((c, idx) => {
                   const chosen = picked === c.id;

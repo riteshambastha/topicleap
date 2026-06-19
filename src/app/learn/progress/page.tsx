@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getProgress } from "@/lib/progress";
+import { getProgress, isTopicComplete } from "@/lib/progress";
 import { getKidStats, firstName, fallbackSummary } from "@/lib/summary";
 import { subjectGradient } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
@@ -46,9 +46,26 @@ export default async function ProgressPage() {
         .limit(5),
     ]);
 
-  const { completedTopics } = await getProgress(supabase, child.id);
+  const { data: wsRows } = await supabase
+    .from("worksheets")
+    .select("id, topic_id, topics!inner(grade_level)")
+    .eq("topics.grade_level", child.grade_level);
+
+  const { completedWorksheets } = await getProgress(supabase, child.id);
   const summary = summaryRow?.summary ?? fallbackSummary(name, stats);
   const recent = (recentData ?? []) as unknown as RecentRow[];
+
+  // topic -> worksheet ids; a topic counts as done when all its worksheets are done
+  const wsByTopic = new Map<string, string[]>();
+  for (const w of (wsRows ?? []) as unknown as { id: string; topic_id: string }[]) {
+    const arr = wsByTopic.get(w.topic_id) ?? [];
+    arr.push(w.id);
+    wsByTopic.set(w.topic_id, arr);
+  }
+  const completedTopics = new Set<string>();
+  for (const [tid, ids] of wsByTopic) {
+    if (isTopicComplete(ids, completedWorksheets)) completedTopics.add(tid);
+  }
 
   const perSubject = (subjects ?? []).map((s) => {
     const subjTopics = (topics ?? []).filter((t) => t.subject_id === s.id);

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getProgress } from "@/lib/progress";
+import { getProgress, isTopicComplete } from "@/lib/progress";
 import { topicIcon, subjectGradient } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
 
@@ -30,8 +30,29 @@ export default async function SubjectPage({
     .eq("grade_level", child.grade_level)
     .order("sort_order");
 
-  const { completedTopics, bestByTopic } = await getProgress(supabase, child.id);
+  const topicIds = (topics ?? []).map((t) => t.id);
+  const { data: wsRows } = await supabase
+    .from("worksheets")
+    .select("id, topic_id")
+    .in("topic_id", topicIds.length ? topicIds : ["00000000-0000-0000-0000-000000000000"]);
+
+  const { completedWorksheets, bestByWorksheet } = await getProgress(supabase, child.id);
   const grad = subjectGradient(subject.slug);
+
+  // per-topic worksheet ids + completion + best score
+  const wsByTopic = new Map<string, string[]>();
+  for (const w of wsRows ?? []) {
+    const arr = wsByTopic.get(w.topic_id) ?? [];
+    arr.push(w.id);
+    wsByTopic.set(w.topic_id, arr);
+  }
+  const completedTopics = new Set<string>();
+  const bestByTopic = new Map<string, number>();
+  for (const [tid, ids] of wsByTopic) {
+    if (isTopicComplete(ids, completedWorksheets)) completedTopics.add(tid);
+    const best = Math.max(0, ...ids.map((id) => bestByWorksheet.get(id) ?? 0));
+    if (ids.some((id) => bestByWorksheet.has(id))) bestByTopic.set(tid, best);
+  }
 
   return (
     <div className="flex flex-1 flex-col">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getProgress } from "@/lib/progress";
+import { getProgress, isTopicComplete } from "@/lib/progress";
 import { topicIcon } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
 import { GlobalSearch, type SearchItem } from "@/components/global-search";
@@ -22,7 +22,7 @@ export default async function LearnHome() {
   if (!child) redirect("/kids");
 
   const supabase = await createClient();
-  const [{ data: subjects }, { data: topics }, { data: lessons }] =
+  const [{ data: subjects }, { data: topics }, { data: lessons }, { data: wsRows }] =
     await Promise.all([
       supabase.from("subjects").select("id, slug, name").order("sort_order"),
       supabase
@@ -31,9 +31,25 @@ export default async function LearnHome() {
         .eq("grade_level", child.grade_level)
         .order("sort_order"),
       supabase.from("lessons").select("topic_id, steps"),
+      supabase
+        .from("worksheets")
+        .select("id, topic_id, topics!inner(grade_level)")
+        .eq("topics.grade_level", child.grade_level),
     ]);
 
-  const { completedTopics } = await getProgress(supabase, child.id);
+  const { completedWorksheets } = await getProgress(supabase, child.id);
+
+  // worksheet ids per topic -> a topic is "complete" when all are done
+  const wsByTopic = new Map<string, string[]>();
+  for (const w of (wsRows ?? []) as unknown as { id: string; topic_id: string }[]) {
+    const arr = wsByTopic.get(w.topic_id) ?? [];
+    arr.push(w.id);
+    wsByTopic.set(w.topic_id, arr);
+  }
+  const completedTopics = new Set<string>();
+  for (const [tid, ids] of wsByTopic) {
+    if (isTopicComplete(ids, completedWorksheets)) completedTopics.add(tid);
+  }
 
   // Build a searchable blob of lesson text per topic.
   const lessonText = new Map<string, string>();

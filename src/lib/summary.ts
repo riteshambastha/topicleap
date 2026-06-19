@@ -12,10 +12,13 @@ export interface KidStats {
 }
 
 type AttemptRow = {
+  worksheet_id: string;
   correct_count: number;
   total_questions: number;
   worksheets: { topic_id: string; topics: { name: string } | null } | null;
 };
+
+type WsRow = { id: string; topic_id: string };
 
 export function firstName(displayName: string): string {
   return (displayName || "friend").trim().split(/\s+/)[0];
@@ -26,12 +29,12 @@ export async function getKidStats(
   supabase: SupabaseClient,
   child: { id: string; grade_level: number },
 ): Promise<KidStats> {
-  const [{ data: ledger }, { data: attemptsData }, { count: totalTopics }] =
+  const [{ data: ledger }, { data: attemptsData }, { count: totalTopics }, { data: wsData }] =
     await Promise.all([
       supabase.from("points_ledger").select("points").eq("child_id", child.id),
       supabase
         .from("attempts")
-        .select("correct_count, total_questions, worksheets(topic_id, topics(name))")
+        .select("worksheet_id, correct_count, total_questions, worksheets(topic_id, topics(name))")
         .eq("child_id", child.id)
         .eq("status", "completed")
         .order("completed_at", { ascending: false }),
@@ -39,28 +42,44 @@ export async function getKidStats(
         .from("topics")
         .select("id", { count: "exact", head: true })
         .eq("grade_level", child.grade_level),
+      supabase
+        .from("worksheets")
+        .select("id, topic_id, topics!inner(grade_level)")
+        .eq("topics.grade_level", child.grade_level),
     ]);
 
   const totalPoints = (ledger ?? []).reduce((a, r) => a + (r.points ?? 0), 0);
   const rows = (attemptsData ?? []) as unknown as AttemptRow[];
 
-  const topicIds = new Set<string>();
+  // distinct completed worksheets + accuracy
+  const completedWs = new Set<string>();
   let correct = 0;
   let total = 0;
   for (const r of rows) {
     total += r.total_questions;
     correct += r.correct_count;
-    const tid = r.worksheets?.topic_id;
-    if (tid) topicIds.add(tid);
+    completedWs.add(r.worksheet_id);
+  }
+
+  // topics where every worksheet is completed
+  const wsByTopic = new Map<string, string[]>();
+  for (const w of (wsData ?? []) as unknown as WsRow[]) {
+    const arr = wsByTopic.get(w.topic_id) ?? [];
+    arr.push(w.id);
+    wsByTopic.set(w.topic_id, arr);
+  }
+  let topicsCompleted = 0;
+  for (const ids of wsByTopic.values()) {
+    if (ids.length > 0 && ids.every((id) => completedWs.has(id))) topicsCompleted += 1;
   }
 
   const last = rows[0];
   return {
     totalPoints,
-    topicsCompleted: topicIds.size,
+    topicsCompleted,
     totalTopics: totalTopics ?? 0,
     accuracy: total > 0 ? Math.round((100 * correct) / total) : 0,
-    worksheetsCompleted: rows.length,
+    worksheetsCompleted: completedWs.size,
     lastTopicName: last?.worksheets?.topics?.name ?? null,
     lastScorePct:
       last && last.total_questions > 0

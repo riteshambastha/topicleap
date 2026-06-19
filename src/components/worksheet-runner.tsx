@@ -4,20 +4,38 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ListenButton } from "@/components/listen-button";
 import type { GradeResponse, PublicQuestion } from "@/lib/types";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
+
+/** Build the text read aloud for a question (prompt + any choices). */
+function speakText(q: PublicQuestion): string {
+  if (q.question_type === "mcq" && q.choices) {
+    const opts = q.choices
+      .map((c, i) => `Option ${LETTERS[i]}: ${c.label}`)
+      .join(". ");
+    return `${q.prompt}. ${opts}`;
+  }
+  return q.prompt;
+}
 
 export function WorksheetRunner({
   worksheetId,
   topicId,
   title,
   questions,
+  worksheetNumber = 1,
+  totalWorksheets = 1,
+  nextWorksheetId = null,
 }: {
   worksheetId: string;
   topicId: string;
   title: string;
   questions: PublicQuestion[];
+  worksheetNumber?: number;
+  totalWorksheets?: number;
+  nextWorksheetId?: string | null;
 }) {
   const router = useRouter();
   const [responses, setResponses] = useState<Record<string, string>>({});
@@ -129,10 +147,8 @@ export function WorksheetRunner({
           <Button variant="outline" size="lg" onClick={() => router.push(`/learn/${topicId}`)}>
             Back to topic
           </Button>
-          <Button variant="success" size="lg" onClick={() => router.push("/learn/progress")}>
-            📊 See my progress
-          </Button>
           <Button
+            variant="outline"
             size="lg"
             onClick={() => {
               setResult(null);
@@ -142,6 +158,18 @@ export function WorksheetRunner({
           >
             Try again 🔁
           </Button>
+          {nextWorksheetId ? (
+            <Button
+              size="lg"
+              onClick={() => router.push(`/learn/${topicId}/worksheet/${nextWorksheetId}`)}
+            >
+              Next worksheet →
+            </Button>
+          ) : (
+            <Button variant="success" size="lg" onClick={() => router.push("/learn/progress")}>
+              📊 See my progress
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -150,9 +178,13 @@ export function WorksheetRunner({
   // ---------- WORKSHEET FORM ----------
   return (
     <div>
+      <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">
+        Worksheet {worksheetNumber} of {totalWorksheets}
+      </p>
       <h1 className="mb-1 text-2xl font-extrabold sm:text-3xl">{title}</h1>
       <p className="mb-4 text-sm text-slate-500">
-        Answer all {questions.length} questions, then check your score.
+        Answer all {questions.length} questions, then check your score. Tap 🔊 to
+        hear a question read aloud.
       </p>
 
       {/* sticky-ish progress */}
@@ -188,7 +220,10 @@ export function WorksheetRunner({
                   {idx + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-lg font-bold text-slate-900">{q.prompt}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-lg font-bold text-slate-900">{q.prompt}</p>
+                    <ListenButton text={speakText(q)} className="shrink-0" />
+                  </div>
 
                   {q.question_type === "mcq" && q.choices ? (
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">

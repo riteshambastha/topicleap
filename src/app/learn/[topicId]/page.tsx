@@ -2,11 +2,11 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getProgress } from "@/lib/progress";
+import { getProgress, isTopicComplete, topicDoneCount } from "@/lib/progress";
 import { topicIcon, subjectGradient } from "@/lib/topic-icons";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default async function TopicModePage({
+export default async function TopicPage({
   params,
 }: {
   params: Promise<{ topicId: string }>;
@@ -22,61 +22,36 @@ export default async function TopicModePage({
     .eq("id", topicId)
     .maybeSingle();
   if (!topic) notFound();
-
   const subjSlug = (topic.subjects as unknown as { slug: string } | null)?.slug;
 
-  const { data: lesson } = await supabase
-    .from("lessons")
-    .select("id")
-    .eq("topic_id", topicId)
-    .order("sort_order")
-    .limit(1)
-    .maybeSingle();
+  const [{ data: lesson }, { data: worksheets }] = await Promise.all([
+    supabase.from("lessons").select("id").eq("topic_id", topicId).maybeSingle(),
+    supabase
+      .from("worksheets")
+      .select("id, title, sort_order")
+      .eq("topic_id", topicId)
+      .order("sort_order"),
+  ]);
 
-  const { data: worksheet } = await supabase
-    .from("worksheets")
-    .select("id")
-    .eq("topic_id", topicId)
-    .order("sort_order")
-    .limit(1)
-    .maybeSingle();
+  const wsList = worksheets ?? [];
+  const wsIds = wsList.map((w) => w.id);
 
-  let questionCount = 0;
-  if (worksheet) {
-    const { count } = await supabase
-      .from("questions")
-      .select("id", { count: "exact", head: true })
-      .eq("worksheet_id", worksheet.id);
-    questionCount = count ?? 0;
+  // question count per worksheet (for points display)
+  const { data: qRows } = await supabase
+    .from("questions")
+    .select("worksheet_id")
+    .in("worksheet_id", wsIds.length ? wsIds : ["00000000-0000-0000-0000-000000000000"]);
+  const qCount = new Map<string, number>();
+  for (const q of qRows ?? []) {
+    qCount.set(q.worksheet_id, (qCount.get(q.worksheet_id) ?? 0) + 1);
   }
 
-  const { completedTopics, bestByTopic } = await getProgress(supabase, child.id);
-  const done = completedTopics.has(topicId);
-  const best = bestByTopic.get(topicId);
-
-  const modes = [
-    {
-      key: "learn",
-      title: "📘 Learn",
-      blurb: "Walk through the lesson step by step.",
-      href: `/learn/${topicId}/lesson`,
-      show: !!lesson,
-    },
-    {
-      key: "learn-worksheet",
-      title: "📘 ➕ 📝 Learn + Worksheet",
-      blurb: "Do the lesson, then jump straight into practice.",
-      href: `/learn/${topicId}/lesson?then=worksheet`,
-      show: !!lesson && !!worksheet,
-    },
-    {
-      key: "worksheet",
-      title: "📝 Worksheet only",
-      blurb: "Skip ahead and test yourself for points.",
-      href: `/learn/${topicId}/worksheet`,
-      show: !!worksheet,
-    },
-  ].filter((m) => m.show);
+  const { completedWorksheets, bestByWorksheet } = await getProgress(supabase, child.id);
+  const done = topicDoneCount(wsIds, completedWorksheets);
+  const total = wsIds.length;
+  const allDone = isTopicComplete(wsIds, completedWorksheets);
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const firstWsId = wsList[0]?.id;
 
   return (
     <main className="mx-auto w-full max-w-4xl p-4 sm:p-6">
@@ -87,50 +62,120 @@ export default async function TopicModePage({
         ← Back to topics
       </Link>
 
+      {/* topic header with icon + progress */}
       <div className="mt-3 mb-6 flex items-start gap-4">
         <div
           className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${subjectGradient(subjSlug)} text-4xl shadow-sm`}
         >
           {topicIcon(topic.slug, subjSlug)}
         </div>
-        <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-extrabold sm:text-3xl">{topic.name}</h1>
-          {topic.standard_code && (
-            <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-              {topic.standard_code}
-            </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-extrabold sm:text-3xl">{topic.name}</h1>
+            {topic.standard_code && (
+              <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+                {topic.standard_code}
+              </span>
+            )}
+            {allDone && (
+              <span className="rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-700">
+                ✓ All worksheets done!
+              </span>
+            )}
+          </div>
+          {topic.description && (
+            <p className="mt-1 text-slate-600">{topic.description}</p>
           )}
-          {done && (
-            <span className="rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-700">
-              ✓ Completed{best != null ? ` · best ${best}%` : ""}
-            </span>
+          {total > 0 && (
+            <div className="mt-3 max-w-md">
+              <div className="mb-1 flex justify-between text-xs font-semibold text-slate-500">
+                <span>{done} of {total} worksheets done</span>
+                <span>{pct}%</span>
+              </div>
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className={`h-full rounded-full ${allDone ? "bg-teal-500" : "bg-gradient-to-r " + subjectGradient(subjSlug)}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
           )}
-        </div>
-        {topic.description && (
-          <p className="mt-1 text-slate-600">{topic.description}</p>
-        )}
-        {questionCount > 0 && (
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            📝 {questionCount} practice questions
-          </p>
-        )}
         </div>
       </div>
 
-      <p className="mb-3 font-semibold text-slate-700">How do you want to start?</p>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {modes.map((m) => (
-          <Link key={m.key} href={m.href}>
+      {/* lesson */}
+      {lesson && (
+        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          <Link href={`/learn/${topicId}/lesson`}>
             <Card className="h-full transition hover:border-indigo-400 hover:shadow-md">
               <CardContent className="p-5">
-                <p className="text-lg font-bold">{m.title}</p>
-                <p className="mt-1 text-sm text-slate-500">{m.blurb}</p>
+                <p className="text-lg font-bold">📘 Learn the lesson</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Step through the explanation and examples.
+                </p>
               </CardContent>
             </Card>
           </Link>
-        ))}
-      </div>
+          {firstWsId && (
+            <Link href={`/learn/${topicId}/lesson?then=worksheet`}>
+              <Card className="h-full transition hover:border-indigo-400 hover:shadow-md">
+                <CardContent className="p-5">
+                  <p className="text-lg font-bold">📘 ➕ 📝 Learn, then practice</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Do the lesson, then jump into Worksheet 1.
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+        </div>
+      )}
+
+      {/* worksheets */}
+      <h2 className="mb-3 text-lg font-bold text-slate-700">Worksheets</h2>
+      {total === 0 ? (
+        <p className="text-slate-500">No worksheets for this topic yet.</p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {wsList.map((w, i) => {
+            const wsDone = completedWorksheets.has(w.id);
+            const best = bestByWorksheet.get(w.id);
+            const points = (qCount.get(w.id) ?? 0) * 10;
+            return (
+              <Link key={w.id} href={`/learn/${topicId}/worksheet/${w.id}`} className="group">
+                <div
+                  className={`flex h-full flex-col rounded-2xl border-2 p-4 transition group-hover:-translate-y-0.5 group-hover:shadow-md ${
+                    wsDone ? "border-teal-400 bg-teal-50" : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg font-extrabold ${
+                        wsDone ? "bg-teal-500 text-white" : "bg-indigo-100 text-indigo-700"
+                      }`}
+                    >
+                      {wsDone ? "✓" : i + 1}
+                    </span>
+                    <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-600">
+                      {points} pts
+                    </span>
+                  </div>
+                  <p className="mt-3 font-bold text-slate-900">{w.title}</p>
+                  <p className="mt-0.5 text-sm font-semibold">
+                    {wsDone ? (
+                      <span className="text-teal-600">
+                        ✓ Done{best != null ? ` · best ${best}%` : ""}
+                      </span>
+                    ) : (
+                      <span className="text-indigo-600">Start →</span>
+                    )}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </main>
   );
 }

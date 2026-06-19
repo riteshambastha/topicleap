@@ -1,17 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface Progress {
-  /** topic ids the child has completed at least one worksheet attempt for */
-  completedTopics: Set<string>;
-  /** topic id -> best score percentage */
-  bestByTopic: Map<string, number>;
+  /** worksheet ids the child has completed at least once */
+  completedWorksheets: Set<string>;
+  /** worksheet id -> best score percentage */
+  bestByWorksheet: Map<string, number>;
 }
 
 type AttemptRow = {
-  status: string;
+  worksheet_id: string;
   correct_count: number;
   total_questions: number;
-  worksheets: { topic_id: string } | null;
 };
 
 /** Per-child progress derived from completed worksheet attempts (RLS-scoped). */
@@ -21,24 +20,41 @@ export async function getProgress(
 ): Promise<Progress> {
   const { data } = await supabase
     .from("attempts")
-    .select("status, correct_count, total_questions, worksheets(topic_id)")
+    .select("worksheet_id, correct_count, total_questions")
     .eq("child_id", childId)
     .eq("status", "completed");
 
-  const rows = (data ?? []) as unknown as AttemptRow[];
-  const completedTopics = new Set<string>();
-  const bestByTopic = new Map<string, number>();
+  const rows = (data ?? []) as AttemptRow[];
+  const completedWorksheets = new Set<string>();
+  const bestByWorksheet = new Map<string, number>();
 
   for (const a of rows) {
-    const tid = a.worksheets?.topic_id;
-    if (!tid) continue;
-    completedTopics.add(tid);
+    completedWorksheets.add(a.worksheet_id);
     const pct =
       a.total_questions > 0
         ? Math.round((100 * a.correct_count) / a.total_questions)
         : 0;
-    bestByTopic.set(tid, Math.max(bestByTopic.get(tid) ?? 0, pct));
+    bestByWorksheet.set(
+      a.worksheet_id,
+      Math.max(bestByWorksheet.get(a.worksheet_id) ?? 0, pct),
+    );
   }
 
-  return { completedTopics, bestByTopic };
+  return { completedWorksheets, bestByWorksheet };
+}
+
+/** A topic is complete when it has worksheets and all are completed. */
+export function isTopicComplete(
+  worksheetIds: string[],
+  completed: Set<string>,
+): boolean {
+  return worksheetIds.length > 0 && worksheetIds.every((id) => completed.has(id));
+}
+
+/** How many of a topic's worksheets are done. */
+export function topicDoneCount(
+  worksheetIds: string[],
+  completed: Set<string>,
+): number {
+  return worksheetIds.filter((id) => completed.has(id)).length;
 }

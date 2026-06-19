@@ -20,6 +20,7 @@ import random
 GRADE = 4
 LETTERS = ["a", "b", "c", "d"]
 QUESTIONS_PER_TOPIC = 20
+WORKSHEET_SIZE = 5  # questions per worksheet; topics split into Worksheet 1, 2, ...
 
 
 _ASCII_MAP = {
@@ -1106,29 +1107,38 @@ def emit():
           f"and t.grade_level = {GRADE}")
         p("and not exists (select 1 from public.lessons l where l.topic_id = t.id);")
 
-        # worksheet (guarded)
-        p("insert into public.worksheets (topic_id, title, grade_level, sort_order)")
-        p(f"select t.id, {sql_str(name + ' — Practice')}, {GRADE}, 0")
-        p("from public.topics t join public.subjects s on s.id = t.subject_id")
-        p(f"where s.slug = {sql_str(subj_slug)} and t.slug = {sql_str(tslug)} "
-          f"and t.grade_level = {GRADE}")
-        p("and not exists (select 1 from public.worksheets w where w.topic_id = t.id);")
+        # Split the topic's questions into worksheets of WORKSHEET_SIZE,
+        # titled "Worksheet 1", "Worksheet 2", ... Each insert is guarded so
+        # re-running never duplicates.
+        num_ws = (len(questions) + WORKSHEET_SIZE - 1) // WORKSHEET_SIZE
+        for c in range(num_ws):
+            ws_title = f"Worksheet {c + 1}"
+            chunk = questions[c * WORKSHEET_SIZE:(c + 1) * WORKSHEET_SIZE]
 
-        # questions (guarded per sort_order)
-        for i, q in enumerate(questions):
-            choices_sql = (sql_str(json.dumps(q["choices"], ensure_ascii=True)) + "::jsonb"
-                           if q["choices"] else "null")
-            p("insert into public.questions (worksheet_id, grade_level, "
-              "question_type, prompt, choices, correct_answer, points, sort_order)")
-            p(f"select w.id, {GRADE}, {sql_str(q['type'])}, {sql_str(q['prompt'])}, "
-              f"{choices_sql}, {sql_str(str(q['answer']))}, 10, {i}")
-            p("from public.worksheets w join public.topics t on t.id = w.topic_id "
-              "join public.subjects s on s.id = t.subject_id")
+            # worksheet (guarded by topic + title)
+            p("insert into public.worksheets (topic_id, title, grade_level, sort_order)")
+            p(f"select t.id, {sql_str(ws_title)}, {GRADE}, {c}")
+            p("from public.topics t join public.subjects s on s.id = t.subject_id")
             p(f"where s.slug = {sql_str(subj_slug)} and t.slug = {sql_str(tslug)} "
               f"and t.grade_level = {GRADE}")
-            p(f"and not exists (select 1 from public.questions q "
-              f"where q.worksheet_id = w.id and q.sort_order = {i});")
-        p("")
+            p(f"and not exists (select 1 from public.worksheets w "
+              f"where w.topic_id = t.id and w.title = {sql_str(ws_title)});")
+
+            # questions for this worksheet (guarded per local sort_order)
+            for li, q in enumerate(chunk):
+                choices_sql = (sql_str(json.dumps(q["choices"], ensure_ascii=True)) + "::jsonb"
+                               if q["choices"] else "null")
+                p("insert into public.questions (worksheet_id, grade_level, "
+                  "question_type, prompt, choices, correct_answer, points, sort_order)")
+                p(f"select w.id, {GRADE}, {sql_str(q['type'])}, {sql_str(q['prompt'])}, "
+                  f"{choices_sql}, {sql_str(str(q['answer']))}, 10, {li}")
+                p("from public.worksheets w join public.topics t on t.id = w.topic_id "
+                  "join public.subjects s on s.id = t.subject_id")
+                p(f"where s.slug = {sql_str(subj_slug)} and t.slug = {sql_str(tslug)} "
+                  f"and t.grade_level = {GRADE} and w.title = {sql_str(ws_title)}")
+                p(f"and not exists (select 1 from public.questions q "
+                  f"where q.worksheet_id = w.id and q.sort_order = {li});")
+            p("")
 
     return "\n".join(out)
 
