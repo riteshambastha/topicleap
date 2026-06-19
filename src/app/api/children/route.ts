@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   const username = body.username?.trim().toLowerCase();
   const displayName = body.displayName?.trim();
   const pin = body.pin?.trim() ?? "";
-  const gradeLevel = body.gradeLevel ?? 4;
+  const gradeLevel = Number(body.gradeLevel ?? 4);
 
   if (!username || !/^[a-z0-9_]{3,20}$/.test(username)) {
     return NextResponse.json(
@@ -44,6 +44,9 @@ export async function POST(req: Request) {
   }
   if (!/^\d{4,6}$/.test(pin)) {
     return NextResponse.json({ error: "PIN must be 4–6 digits." }, { status: 400 });
+  }
+  if (!Number.isInteger(gradeLevel) || gradeLevel < 1 || gradeLevel > 12) {
+    return NextResponse.json({ error: "Grade must be between 1 and 12." }, { status: 400 });
   }
 
   const admin = createAdminClient();

@@ -8,12 +8,23 @@ import { Label } from "@/components/ui/label";
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8];
 
-export function AddChildForm() {
+export function EditChildForm({
+  childId,
+  initialDisplayName,
+  initialUsername,
+  initialGrade,
+}: {
+  childId: string;
+  initialDisplayName: string;
+  initialUsername: string;
+  initialGrade: number;
+}) {
   const router = useRouter();
-  const [displayName, setDisplayName] = useState("");
-  const [username, setUsername] = useState("");
+  const [open, setOpen] = useState(false);
+  const [displayName, setDisplayName] = useState(initialDisplayName);
+  const [username, setUsername] = useState(initialUsername);
+  const [gradeLevel, setGradeLevel] = useState(initialGrade);
   const [pin, setPin] = useState("");
-  const [gradeLevel, setGradeLevel] = useState(4);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,52 +34,60 @@ export function AddChildForm() {
     setError(null);
     setOk(null);
     setLoading(true);
-    const res = await fetch("/api/children", {
-      method: "POST",
+    const res = await fetch(`/api/children/${childId}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ displayName, username, pin, gradeLevel }),
+      body: JSON.stringify({
+        displayName,
+        username,
+        gradeLevel,
+        pin: pin.trim() || undefined,
+      }),
     });
     const data = await res.json();
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? "Could not create child login.");
+      setError(data.error ?? "Could not save changes.");
       return;
     }
-    setOk(`Created login for @${data.username}. They can sign in now.`);
-    setDisplayName("");
-    setUsername("");
+    setOk("Saved!");
     setPin("");
-    setGradeLevel(4);
     router.refresh();
+  }
+
+  if (!open) {
+    return (
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        ✏️ Edit details
+      </Button>
+    );
   }
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4">
       <div className="grid gap-1.5">
-        <Label htmlFor="c-name">Child&apos;s name</Label>
+        <Label htmlFor="e-name">Name</Label>
         <Input
-          id="c-name"
+          id="e-name"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="e.g. Maya"
           required
         />
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="c-username">Username</Label>
+        <Label htmlFor="e-username">Username</Label>
         <Input
-          id="c-username"
+          id="e-username"
           value={username}
           autoCapitalize="none"
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="3–20 letters/numbers"
           required
         />
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="c-grade">Grade</Label>
+        <Label htmlFor="e-grade">Grade</Label>
         <select
-          id="c-grade"
+          id="e-grade"
           value={gradeLevel}
           onChange={(e) => setGradeLevel(Number(e.target.value))}
           className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
@@ -79,26 +98,27 @@ export function AddChildForm() {
             </option>
           ))}
         </select>
-        <p className="text-xs text-slate-500">
-          Grade 4 has content today; other grades are coming soon.
-        </p>
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="c-pin">PIN (4–6 digits)</Label>
+        <Label htmlFor="e-pin">New PIN (optional)</Label>
         <Input
-          id="c-pin"
+          id="e-pin"
           inputMode="numeric"
           value={pin}
           onChange={(e) => setPin(e.target.value)}
-          placeholder="e.g. 1234"
-          required
+          placeholder="Leave blank to keep current PIN"
         />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {ok && <p className="text-sm text-emerald-600">{ok}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? "Creating…" : "Create child login"}
-      </Button>
+      <div className="flex gap-3">
+        <Button type="submit" disabled={loading}>
+          {loading ? "Saving…" : "Save changes"}
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+      </div>
     </form>
   );
 }

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentParent } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
+import { EditChildForm } from "@/components/edit-child-form";
 import { Card, CardContent } from "@/components/ui/card";
 
 type AttemptRow = {
@@ -120,6 +121,18 @@ export default async function ChildReportPage({
                 points
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* edit details */}
+        <Card className="mb-6">
+          <CardContent className="p-5">
+            <EditChildForm
+              childId={child.id}
+              initialDisplayName={child.display_name}
+              initialUsername={child.username}
+              initialGrade={child.grade_level}
+            />
           </CardContent>
         </Card>
 
