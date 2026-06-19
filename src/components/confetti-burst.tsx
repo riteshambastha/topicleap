@@ -23,10 +23,14 @@ export function ConfettiBurst({
   trigger,
   originY = "35%",
   count = 28,
+  spreadMs = 70,
+  lifeMs = 1300,
 }: {
   trigger: number;
   originY?: string;
   count?: number;
+  spreadMs?: number;
+  lifeMs?: number;
 }) {
   const [pieces, setPieces] = useState<Piece[]>([]);
 
@@ -46,11 +50,11 @@ export function ConfettiBurst({
       rot: (Math.random() * 2 - 1) * 540,
       color: COLORS[i % COLORS.length],
       size: 6 + Math.random() * 9,
-      delay: Math.random() * 70,
+      delay: Math.random() * spreadMs,
       round: Math.random() > 0.5,
     }));
     setPieces(arr);
-    const t = setTimeout(() => setPieces([]), 1300);
+    const t = setTimeout(() => setPieces([]), lifeMs);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger]);

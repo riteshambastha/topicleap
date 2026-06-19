@@ -84,6 +84,11 @@ export function WorksheetRunner({
         ? (graded.correctCount / graded.totalQuestions) * 100
         : 0;
       playCelebrate(p >= 100 ? 4 : p >= 80 ? 3 : p >= 50 ? 2 : 1);
+      // perfect score: extra waves of confetti for a longer celebration
+      if (p >= 100) {
+        window.setTimeout(() => setCelebrate((c) => c + 1), 750);
+        window.setTimeout(() => setCelebrate((c) => c + 1), 1500);
+      }
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -91,20 +96,30 @@ export function WorksheetRunner({
   // ---------- RESULTS SCREEN ----------
   if (result) {
     const pct = Math.round((result.correctCount / result.totalQuestions) * 100);
+    const perfect = result.totalQuestions > 0 && result.correctCount === result.totalQuestions;
     const resultById = new Map(result.results.map((r) => [r.questionId, r]));
-    const cheer =
-      pct >= 90 ? "Amazing! 🌟" : pct >= 70 ? "Great job! 🎉" : pct >= 50 ? "Nice effort! 👍" : "Keep practicing! 💪";
-    const heroGrad =
-      pct >= 70 ? "from-emerald-500 to-teal-500" : pct >= 50 ? "from-amber-500 to-orange-500" : "from-rose-500 to-pink-500";
+    const cheer = perfect
+      ? "Perfect score! 🏆"
+      : pct >= 90 ? "Amazing! 🌟" : pct >= 70 ? "Great job! 🎉" : pct >= 50 ? "Nice effort! 👍" : "Keep practicing! 💪";
+    const heroGrad = perfect
+      ? "from-amber-400 via-fuchsia-500 to-indigo-500"
+      : pct >= 70 ? "from-emerald-500 to-teal-500" : pct >= 50 ? "from-amber-500 to-orange-500" : "from-rose-500 to-pink-500";
 
     return (
       <div>
         <ConfettiBurst
           trigger={celebrate}
           originY="25%"
-          count={Math.round(18 + (pct / 100) * 52)}
+          count={perfect ? 80 : Math.round(18 + (pct / 100) * 52)}
+          spreadMs={perfect ? 1500 : 70}
+          lifeMs={perfect ? 2800 : 1300}
         />
         <div className={`mb-6 overflow-hidden rounded-3xl bg-gradient-to-br ${heroGrad} p-8 text-center text-white shadow`}>
+          {perfect && (
+            <span className="tl-pop mb-3 inline-block rounded-full bg-white/25 px-5 py-1.5 text-base font-extrabold backdrop-blur">
+              🏆 PERFECT! 🏆
+            </span>
+          )}
           <p className="text-sm font-semibold uppercase tracking-widest text-white/80">
             {cheer}
           </p>
