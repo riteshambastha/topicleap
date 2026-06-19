@@ -19,6 +19,7 @@ import random
 
 GRADE = 4
 LETTERS = ["a", "b", "c", "d"]
+QUESTIONS_PER_TOPIC = 20
 
 
 _ASCII_MAP = {
@@ -80,7 +81,7 @@ def g_place_value(rng):
     places = [(1, "ones"), (10, "tens"), (100, "hundreds"),
               (1000, "thousands"), (10000, "ten thousands")]
     used = set()
-    while len(qs) < 10:
+    while len(qs) < QUESTIONS_PER_TOPIC:
         n = rng.randint(10000, 999999)
         s = str(n)
         idx = rng.randint(0, len(s) - 1)
@@ -100,7 +101,7 @@ def g_place_value(rng):
 def g_rounding(rng):
     qs = []
     targets = [(100, "hundred"), (1000, "thousand"), (10, "ten")]
-    for _ in range(10):
+    for _ in range(QUESTIONS_PER_TOPIC):
         place, name = rng.choice(targets)
         n = rng.randint(place * 2, place * 90 + 555)
         rounded = round(n / place) * place
@@ -113,7 +114,7 @@ def g_rounding(rng):
 
 def g_add_subtract(rng):
     qs = []
-    for i in range(10):
+    for i in range(QUESTIONS_PER_TOPIC):
         a = rng.randint(1200, 89000)
         b = rng.randint(100, a - 1)
         if i % 2 == 0:
@@ -126,7 +127,7 @@ def g_add_subtract(rng):
 def g_multiply_2x2(rng):
     qs = []
     seen = set()
-    while len(qs) < 10:
+    while len(qs) < QUESTIONS_PER_TOPIC:
         a = rng.randint(12, 99)
         b = rng.randint(12, 99)
         if (a, b) in seen:
@@ -138,7 +139,7 @@ def g_multiply_2x2(rng):
 
 def g_division_remainder(rng):
     qs = []
-    for i in range(10):
+    for i in range(QUESTIONS_PER_TOPIC):
         d = rng.randint(3, 9)
         q = rng.randint(12, 80)
         r = rng.randint(1, d - 1)
@@ -152,7 +153,7 @@ def g_division_remainder(rng):
 
 def g_factors_multiples(rng):
     qs = []
-    for i in range(10):
+    for i in range(QUESTIONS_PER_TOPIC):
         if i % 2 == 0:
             n = rng.choice([12, 18, 24, 20, 36, 16, 30, 28])
             factors = [x for x in range(2, n) if n % x == 0]
@@ -172,7 +173,7 @@ def g_factors_multiples(rng):
 def g_equivalent_fractions(rng):
     qs = []
     bases = [(1, 2), (1, 3), (2, 3), (1, 4), (3, 4), (2, 5), (3, 5), (1, 5)]
-    for i in range(10):
+    for i in range(QUESTIONS_PER_TOPIC):
         a, b = rng.choice(bases)
         k = rng.randint(2, 4)
         correct = f"{a*k}/{b*k}"
@@ -183,7 +184,7 @@ def g_equivalent_fractions(rng):
 
 def g_compare_fractions(rng):
     qs = []
-    for _ in range(10):
+    for _ in range(QUESTIONS_PER_TOPIC):
         d = rng.choice([4, 5, 6, 8, 10])
         x = rng.randint(1, d - 1)
         y = rng.randint(1, d - 1)
@@ -199,7 +200,7 @@ def g_compare_fractions(rng):
 
 def g_add_fractions_like(rng):
     qs = []
-    for i in range(10):
+    for i in range(QUESTIONS_PER_TOPIC):
         d = rng.choice([5, 6, 8, 10, 12])
         a = rng.randint(1, d - 2)
         b = rng.randint(1, d - 1 - a)
@@ -228,8 +229,8 @@ PRONOUNS = ["she", "they", "him", "we", "it", "us", "her", "them", "you", "I"]
 def g_nouns(rng):
     qs, pool = [], NOUNS[:]
     rng.shuffle(pool)
-    for i in range(10):
-        correct = pool[i]
+    for i in range(QUESTIONS_PER_TOPIC):
+        correct = pool[i % len(pool)]
         distract = rng.sample(VERBS + ADJS, 3)
         qs.append(mcq("Which word is a noun (a person, place, or thing)?",
                       correct, distract, rng))
@@ -239,7 +240,7 @@ def g_nouns(rng):
 def g_verbs(rng):
     qs, pool = [], VERBS[:]
     rng.shuffle(pool)
-    for i in range(10):
+    for i in range(QUESTIONS_PER_TOPIC):
         correct = pool[i % len(pool)]
         distract = rng.sample(NOUNS + ADJS, 3)
         qs.append(mcq("Which word is an action verb (something you can do)?",
@@ -250,7 +251,7 @@ def g_verbs(rng):
 def g_adjectives(rng):
     qs, pool = [], ADJS[:]
     rng.shuffle(pool)
-    for i in range(10):
+    for i in range(QUESTIONS_PER_TOPIC):
         correct = pool[i % len(pool)]
         distract = rng.sample(NOUNS + VERBS, 3)
         qs.append(mcq("Which word is an adjective (it describes a noun)?",
@@ -261,7 +262,7 @@ def g_adjectives(rng):
 def g_pronouns(rng):
     qs, pool = [], PRONOUNS[:]
     rng.shuffle(pool)
-    for i in range(10):
+    for i in range(QUESTIONS_PER_TOPIC):
         correct = pool[i % len(pool)]
         distract = rng.sample(NOUNS + VERBS, 3)
         qs.append(mcq("Which word is a pronoun (it takes the place of a noun)?",
@@ -273,11 +274,14 @@ def g_subject_verb(rng):
     singular = [("dog", "barks"), ("girl", "runs"), ("baby", "cries"),
                 ("teacher", "writes"), ("bird", "sings"), ("boy", "plays"),
                 ("cat", "sleeps"), ("river", "flows"), ("clock", "ticks"),
-                ("flower", "grows")]
+                ("flower", "grows"), ("chef", "cooks"), ("artist", "paints"),
+                ("snake", "slithers"), ("rabbit", "hops"), ("engine", "roars"),
+                ("student", "reads"), ("farmer", "plants"), ("kettle", "whistles"),
+                ("puppy", "wags"), ("singer", "performs")]
     qs = []
     pool = singular[:]
     rng.shuffle(pool)
-    for noun, verb in pool[:10]:
+    for noun, verb in pool[:QUESTIONS_PER_TOPIC]:
         wrong = verb[:-1] if verb.endswith("s") else verb + "s"
         qs.append(mcq(f"Choose the correct verb: \"The {noun} ____ every day.\"",
                       verb, [wrong, verb + "ed", verb + "ing"], rng))
@@ -287,37 +291,43 @@ def g_subject_verb(rng):
 PAST = {"run": "ran", "go": "went", "eat": "ate", "see": "saw", "make": "made",
         "take": "took", "give": "gave", "write": "wrote", "sing": "sang",
         "swim": "swam", "fly": "flew", "draw": "drew", "ride": "rode",
-        "begin": "began"}
+        "begin": "began", "catch": "caught", "teach": "taught", "buy": "bought",
+        "bring": "brought", "think": "thought", "drink": "drank", "grow": "grew",
+        "know": "knew", "throw": "threw", "speak": "spoke"}
 
 
 def g_past_tense(rng):
     items = list(PAST.items())
     rng.shuffle(items)
     return [fill(f"What is the past tense of the verb \"{base}\"?", past)
-            for base, past in items[:10]]
+            for base, past in items[:QUESTIONS_PER_TOPIC]]
 
 
 PLURALS = {"baby": "babies", "city": "cities", "leaf": "leaves",
            "wolf": "wolves", "box": "boxes", "bus": "buses", "fox": "foxes",
            "story": "stories", "knife": "knives", "dish": "dishes",
            "berry": "berries", "brush": "brushes", "penny": "pennies",
-           "shelf": "shelves"}
+           "shelf": "shelves", "lady": "ladies", "match": "matches",
+           "glass": "glasses", "puppy": "puppies", "half": "halves",
+           "cherry": "cherries", "branch": "branches", "loaf": "loaves",
+           "fairy": "fairies", "wish": "wishes"}
 
 
 def g_plurals(rng):
     items = list(PLURALS.items())
     rng.shuffle(items)
     return [fill(f"Write the plural of \"{word}\".", plural)
-            for word, plural in items[:10]]
+            for word, plural in items[:QUESTIONS_PER_TOPIC]]
 
 
 def g_capitalization(rng):
     names = ["india", "monday", "december", "amazon river", "mount everest",
              "sarah", "new york", "africa", "tuesday", "october", "pacific ocean",
-             "london"]
+             "london", "july", "canada", "friday", "nile river", "tokyo",
+             "maria", "australia", "saturn"]
     rng.shuffle(names)
     qs = []
-    for name in names[:10]:
+    for name in names[:QUESTIONS_PER_TOPIC]:
         correct = name.title()
         commons = rng.sample(["river", "city", "month", "country", "ocean",
                               "mountain", "friend", "day"], 3)
@@ -332,10 +342,14 @@ def g_end_punctuation(rng):
              ("That is amazing", "!"), ("The sky is blue", "."),
              ("Are you ready", "?"), ("Stop right now", "!"),
              ("We had lunch", "."), ("How does it work", "?"),
-             ("Look at that", "!"), ("She likes apples", ".")]
+             ("Look at that", "!"), ("She likes apples", "."),
+             ("Who is at the door", "?"), ("The cake is delicious", "."),
+             ("Run for your life", "!"), ("Can you help me", "?"),
+             ("My dog is brown", "."), ("What a great show", "!"),
+             ("When does it start", "?"), ("We won the game", "!")]
     rng.shuffle(items)
     qs = []
-    for sent, mark in items[:10]:
+    for sent, mark in items[:QUESTIONS_PER_TOPIC]:
         distract = [m for m in [".", "?", "!"] if m != mark] + [","]
         qs.append(mcq(f"Which end mark best completes the sentence?  \"{sent}___\"",
                       mark, distract, rng))
@@ -355,7 +369,7 @@ def build_bank(raw, rng):
         else:
             _, prompt, answer = item
             out.append(fill(prompt, answer))
-    assert len(out) == 10, f"bank must have 10 questions, got {len(out)}"
+    assert len(out) == QUESTIONS_PER_TOPIC, f"bank must have {QUESTIONS_PER_TOPIC}, got {len(out)}"
     return out
 
 
@@ -490,10 +504,15 @@ def g_commas_series(rng):
             ("cats", "dogs", "fish"), ("run", "jump", "swim"),
             ("Mom", "Dad", "Grandma"), ("pencils", "pens", "markers"),
             ("spring", "summer", "fall"), ("milk", "eggs", "bread"),
-            ("soccer", "tennis", "golf"), ("trains", "planes", "buses")]
+            ("soccer", "tennis", "golf"), ("trains", "planes", "buses"),
+            ("lions", "tigers", "bears"), ("books", "pens", "rulers"),
+            ("ham", "cheese", "lettuce"), ("north", "south", "east"),
+            ("piano", "drums", "guitar"), ("rain", "snow", "hail"),
+            ("circles", "squares", "triangles"), ("apples", "grapes", "plums"),
+            ("walk", "skip", "hop"), ("gold", "silver", "bronze")]
     rng.shuffle(sets)
     qs = []
-    for a, b, c in sets[:10]:
+    for a, b, c in sets[:QUESTIONS_PER_TOPIC]:
         correct = f"I like {a}, {b}, and {c}."
         d1 = f"I like {a} {b} and {c}."
         d2 = f"I like {a}, {b} and {c}"
@@ -505,7 +524,7 @@ def g_commas_series(rng):
 
 def g_multiply_1digit(rng):
     qs, seen = [], set()
-    while len(qs) < 10:
+    while len(qs) < QUESTIONS_PER_TOPIC:
         a = rng.randint(2, 9)
         b = rng.randint(112, 989)
         if (a, b) in seen:
@@ -641,6 +660,261 @@ READING = {
 }
 
 
+# ============================ EXTRA QUESTIONS (enrichment: +10 per topic)
+
+SCIENCE_EXTRA = {
+"energy": [
+ ("mcq","Which of these has the MOST kinetic energy?","a race car speeding down a track",["a parked car","a sleeping cat","a book on a shelf"]),
+ ("mcq","Food gives your body energy. Where do plants get their energy first?","the Sun",["the soil","the wind","the Moon"]),
+ ("mcq","A roller coaster car at the very top of a hill has a lot of:","stored (potential) energy",["no energy","sound energy","light energy"]),
+ ("mcq","Which change shows energy turning into heat?","rubbing your hands together",["a still rock","a closed book","a quiet room"]),
+ ("mcq","When you turn on a flashlight, electrical energy changes into:","light (and some heat)",["sound only","wind","matter"]),
+ ("mcq","Which of these is a source of energy we can see and feel as heat and light?","a campfire",["an ice cube","a pillow","a stone"]),
+ ("fill","Energy that is stored and ready to be used is called ____ energy. (one word)","potential"),
+ ("mcq","A wind-up toy moves because it changes stored energy into:","motion (kinetic energy)",["sunlight","sound only","cold"]),
+ ("mcq","Which uses the most energy to run?","a refrigerator running all day",["a sticky note","a paper clip","a rubber band"]),
+ ("mcq","When a ball rolls to a stop, its kinetic energy is mostly changed into:","heat from friction",["new matter","light","gravity"]),
+],
+"waves-light-sound": [
+ ("mcq","Which material lets the most light pass through?","clear glass",["a brick","a metal door","cardboard"]),
+ ("mcq","A drum makes sound when its top surface does what after you hit it?","vibrates",["freezes","glows","melts"]),
+ ("mcq","Why do you see a shadow?","an object blocks the light",["the light bends around it","sound is loud","it is cold"]),
+ ("mcq","Which would make a quieter sound?","tapping a drum gently",["hitting it hard","banging it loudly","slamming it"]),
+ ("mcq","A mirror works because it does what to light very well?","reflects it",["absorbs it all","makes it disappear","turns it to sound"]),
+ ("mcq","Plucking a guitar string tightly makes a sound that is higher in:","pitch",["weight","color","smell"]),
+ ("fill","The bouncing back of sound off a surface, which you hear again, is called an ____. (one word)","echo"),
+ ("mcq","Light from the Sun reaches Earth by traveling through:","space (empty space)",["only water","only wires","soil"]),
+ ("mcq","Which can carry sound? ","air",["empty space (a vacuum)","a shadow","light alone"]),
+ ("mcq","We can use flashes of light or beeps of sound to:","send a message or signal",["create gravity","make new matter","stop time"]),
+],
+"plant-structures": [
+ ("mcq","If a plant's roots are damaged, what will it have trouble doing?","taking in water",["making seeds only","growing flowers only","losing leaves"]),
+ ("mcq","Which part would you expect to find underground?","roots",["flower","most leaves","fruit"]),
+ ("mcq","A cactus has a thick stem mainly to:","store water",["make seeds","attract bees","catch sound"]),
+ ("mcq","Bees moving pollen between flowers help plants to:","make seeds",["lose leaves","grow shorter","stop drinking water"]),
+ ("mcq","Which plant part do we usually eat when we eat a carrot?","the root",["the flower","the leaf","the seed"]),
+ ("mcq","Leaves are usually flat and wide so they can:","catch lots of sunlight",["hold the plant down","store the seeds","make the soil"]),
+ ("fill","The green coloring in leaves that helps capture sunlight is called ____. (one word, starts with c)","chlorophyll"),
+ ("mcq","What do most seeds need to start growing (germinate)?","water and warmth",["darkness forever","no water at all","loud noise"]),
+ ("mcq","Why might a plant grow toward a window?","to reach more sunlight",["to get away from water","to find soil","to make noise"]),
+ ("mcq","Which part protects the seeds and can help spread them?","the fruit",["the root","the stem","the leaf"]),
+],
+"animal-structures-senses": [
+ ("mcq","Webbed feet most help an animal to:","swim",["fly","dig deep","hear better"]),
+ ("mcq","A snake flicks its tongue mainly to:","smell its surroundings",["taste candy","hear music","see colors"]),
+ ("mcq","Big ears on a desert fox help it to:","hear well and stay cool",["swim faster","fly","dig"]),
+ ("mcq","An owl's large eyes help it to:","see in low light at night",["smell food","taste prey","hear colors"]),
+ ("mcq","A turtle's hard shell is mostly used for:","protection",["flying","swimming fast","smelling"]),
+ ("mcq","Which structure helps a bird build a nest and gather food?","its beak",["its gills","its fins","its shell"]),
+ ("fill","The body covering that keeps a polar bear warm is its thick fur and ____. (one word, a layer under the skin)","fat"),
+ ("mcq","Antennae on an insect are used mainly to:","sense touch and smell",["see far away","fly higher","stay warm"]),
+ ("mcq","Sharp eyesight most helps a hawk to:","spot prey from high up",["stay warm","swim","dig tunnels"]),
+ ("mcq","Strong back legs most help a kangaroo or frog to:","jump",["swim deep","fly","hear"]),
+],
+"earths-features": [
+ ("mcq","Which body of water is smaller than a lake and flows?","a stream",["an ocean","a sea","a gulf"]),
+ ("mcq","On a map, what helps you understand what the symbols mean?","the map key (legend)",["the price","the title only","the date"]),
+ ("mcq","A flat, high area of land is called a:","plateau",["valley","trench","river"]),
+ ("mcq","Which direction is usually at the top of a map?","north",["south","east","down"]),
+ ("mcq","A narrow strip of land joining two larger land areas is an:","isthmus",["island","ocean","desert"]),
+ ("mcq","Most of the water on Earth's surface is found in:","the oceans",["rivers","ponds","puddles"]),
+ ("fill","A large stream of fresh water flowing across land is a ____. (one word)","river"),
+ ("mcq","Which feature is made of moving ice?","a glacier",["a desert","a plain","a lake"]),
+ ("mcq","A coastline is the place where the land meets the:","ocean",["sky","forest","desert"]),
+ ("mcq","Which tool shows the layout of streets, rivers, and mountains of a place?","a map",["a clock","a thermometer","a scale"]),
+],
+"weathering-erosion": [
+ ("mcq","Which is most likely to cause erosion on a riverbank?","fast-flowing water",["a quiet sunny day","a single cloud","moonlight"]),
+ ("mcq","When water freezes in a crack in a rock, it expands and can:","break the rock apart",["heal the rock","melt the rock","paint the rock"]),
+ ("mcq","Sand dunes in a desert are shaped mainly by:","wind",["rivers","glaciers","fire"]),
+ ("mcq","Which slows erosion the most on a bare hillside?","covering it with plants",["removing all soil","adding loose sand","pouring water on it"]),
+ ("mcq","A canyon like the Grand Canyon was carved mostly by a:","river over a long time",["single storm","windy afternoon","fire"]),
+ ("mcq","Rounded, smooth pebbles in a stream got that way from:","being tumbled by water",["being painted","melting","freezing once"]),
+ ("fill","When wind or water drops the sediment it was carrying, the process is called ____. (one word)","deposition"),
+ ("mcq","Which change is the SLOWEST?","a mountain wearing down",["a glass breaking","a candle melting","a balloon popping"]),
+ ("mcq","Tree roots growing into a sidewalk and cracking it is an example of:","weathering",["deposition","evaporation","reflection"]),
+ ("mcq","Ocean waves shape a beach by both eroding and:","depositing sand",["freezing water","making wind","creating rock instantly"]),
+],
+"fossils-rock-layers": [
+ ("mcq","Which is most likely to become a fossil?","the hard bones of an animal",["a soft jellyfish in seconds","a puff of smoke","a sound"]),
+ ("mcq","Sedimentary rock forms when layers of sediment are:","pressed and cemented together",["melted by lava","frozen solid forever","blown into the sky"]),
+ ("mcq","Finding a seashell fossil on a mountain suggests the area was once:","covered by water",["always a mountain","on the Moon","made of metal"]),
+ ("mcq","Which fossil is a TRACE fossil?","a dinosaur footprint",["a dinosaur tooth","a bone","a shell"]),
+ ("mcq","In a cliff of flat rock layers, the youngest layer is usually:","near the top",["at the very bottom","deepest down","floating in air"]),
+ ("mcq","Fossils help scientists learn about animals that lived:","long ago",["only today","in the future","on other planets"]),
+ ("fill","Scientists who dig up and study fossils are called ____. (one word)","paleontologists"),
+ ("mcq","Most fossils are found in which rock type?","sedimentary",["volcanic glass","metal ore","plastic"]),
+ ("mcq","A fossil of a fern tells us that the area once had:","plants growing there",["no life at all","only ice","only metal"]),
+ ("mcq","Rock layers can be compared to a:","stack of pages, oldest at the bottom",["bowl of soup","cup of water","ball of yarn"]),
+],
+"natural-resources": [
+ ("mcq","Which is a NONrenewable resource?","oil",["sunlight","wind","flowing water"]),
+ ("mcq","Solar panels turn sunlight into:","electricity",["coal","oil","wood"]),
+ ("mcq","Which action best conserves paper?","using both sides of a sheet",["throwing away clean paper","leaving printers on","wasting napkins"]),
+ ("mcq","Why is clean fresh water an important resource?","living things need it to survive",["it is only for pools","it has no use","it makes plastic"]),
+ ("mcq","Which is a renewable energy source?","wind",["coal","oil","natural gas"]),
+ ("mcq","Reusing a glass jar instead of buying new ones helps to:","save resources",["create more trash","use more oil","pollute water"]),
+ ("fill","A natural event like an earthquake or flood that can harm people is a natural ____. (one word)","hazard"),
+ ("mcq","Planting trees helps because trees give off ____ that we breathe.","oxygen",["plastic","gasoline","metal"]),
+ ("mcq","Which is the BEST way to reduce car pollution on a short trip?","walk or ride a bike",["drive alone","idle the engine","take a longer drive"]),
+ ("mcq","Turning off lights when you leave a room helps conserve:","energy",["water","trees","air"]),
+],
+"electricity-magnetism": [
+ ("mcq","Which object would a magnet attract?","an iron nail",["a plastic spoon",  "a wooden block","a glass marble"]),
+ ("mcq","To make a bulb light up, you need a complete:","circuit",["magnet","fossil","shadow"]),
+ ("mcq","Which material is the BEST insulator (stops electricity)?","rubber",["copper","aluminum","iron"]),
+ ("mcq","If you flip a magnet around, two ends that used to attract may now:","repel (push apart)",["disappear","melt","glow"]),
+ ("mcq","Static electricity can make your hair:","stand up",["change color","get heavier","turn to metal"]),
+ ("mcq","Which is needed for a simple flashlight circuit to work?","a battery (energy source)",["a magnet only","a mirror","a fossil"]),
+ ("fill","A material that lets electricity flow through it easily is called a ____. (one word)","conductor"),
+ ("mcq","The needle of a compass points north because Earth acts like a giant:","magnet",["battery","light","fossil"]),
+ ("mcq","Which would complete a circuit if placed in the gap?","a piece of metal wire",["a plastic straw","a dry leaf","a rubber band"]),
+ ("mcq","Two magnets snapping together shows that opposite poles:","attract",["repel","vanish","cool down"]),
+],
+"water-cycle-weather": [
+ ("mcq","Dew forming on grass in the morning is an example of:","condensation",["evaporation","erosion","reflection"]),
+ ("mcq","Which tool measures how much rain has fallen?","a rain gauge",["a thermometer","a ruler for height","a clock"]),
+ ("mcq","Puddles disappear on a sunny day because the water:","evaporates",["freezes","condenses","erodes"]),
+ ("mcq","Which is the correct order in the water cycle?","evaporation, then condensation, then precipitation",["precipitation, then evaporation, then nothing","only evaporation","only rain"]),
+ ("mcq","A wind vane is a tool that shows the:","direction of the wind",["temperature","amount of rain","time of day"]),
+ ("mcq","Fog is basically a cloud that forms:","near the ground",["only in space","inside rocks","under the ocean"]),
+ ("fill","Water falling from clouds as rain, snow, or hail is called ____. (one word)","precipitation"),
+ ("mcq","Which weather is most likely when the air is warm and very humid?","thunderstorms",["snow","frost","hail in summer everywhere"]),
+ ("mcq","The Sun's heat is important to the water cycle because it causes water to:","evaporate",["freeze","sink","disappear forever"]),
+ ("mcq","Clouds form when water vapor rises, cools, and:","condenses into tiny droplets",["evaporates more","turns to rock","disappears"]),
+],
+}
+
+READING_EXTRA = {
+"main-idea": [
+ ("mcq","Read: \"Honeybees live in groups called colonies. Each bee has a job: some gather nectar, some guard the hive, and the queen lays eggs.\" The main idea is that honeybees:","live and work together with different jobs",["are afraid of people","only sleep","cannot fly"]),
+ ("mcq","Read: \"Volcanoes can be dangerous but also helpful. Their ash makes soil rich for farming, and they create new land.\" The main idea is that volcanoes:","can be both dangerous and helpful",["are always safe","are only found in oceans","never erupt"]),
+ ("mcq","Read: \"Sleep is important for kids. It helps the body grow, the brain remember, and the mood stay happy.\" The passage is mostly about:","why sleep is important",["how to cook","types of beds","video games"]),
+ ("mcq","Read: \"The ocean is full of life. Tiny plankton, colorful fish, and huge whales all live there.\" The main idea is that the ocean:","is home to many living things",["is always cold","has no animals","is small"]),
+ ("mcq","Read: \"Rosa wanted to help her town. She started a club that cleaned the park, planted flowers, and painted the fence.\" The main idea is that Rosa:","worked to improve her town",["disliked the park","moved away","stopped helping"]),
+ ("mcq","Read: \"Spiders are helpful creatures. They catch insects like flies and mosquitoes in their webs.\" The main idea is that spiders:","help by catching insects",["are very large","cannot make webs","eat plants"]),
+ ("mcq","Read: \"Deserts are harsh places, yet many animals live there. They hide from the heat by day and come out at night.\" The main idea is that desert animals:","have ways to survive the heat",["never sleep","live in the ocean","love cold weather"]),
+ ("mcq","Read: \"The internet connects people everywhere. We use it to learn, talk to friends, and find information.\" The main idea is that the internet:","helps connect people and share information",["is only for games","is always broken","stores food"]),
+ ("mcq","Read: \"Trees do many things for us. They give shade, clean the air, and are home to birds.\" The main idea is that trees:","are useful in many ways",["are dangerous","grow only indoors","make noise"]),
+ ("fill","Read: \"Exercise is great for kids: it builds strong bodies, helps focus, and is fun.\" In one word, the passage is mostly about why exercise is ____ for kids.","great"),
+],
+"supporting-details": [
+ ("mcq","Read: \"The campsite was perfect. It had a calm lake, flat ground for tents, and a fire pit.\" Which detail supports that it was perfect?","It had a calm lake.",["It rained later.","The drive was long.","We left early."]),
+ ("mcq","Read: \"Our class pet hamster is fun. It runs on its wheel, stuffs food in its cheeks, and naps in a pile of shavings.\" Which is a supporting detail?","It runs on its wheel.",["School is closed.","The room is blue.","We have math."]),
+ ("mcq","Read: \"The storm was fierce. Lightning flashed, thunder boomed, and wind bent the trees.\" Which detail shows the storm was fierce?","Wind bent the trees.",["It was Monday.","The store was open.","We ate dinner."]),
+ ("mcq","Read: \"Grandpa's garden is amazing. He grows tomatoes, sunflowers taller than me, and sweet strawberries.\" A supporting detail is that he grows:","strawberries",["a car","a boat","a kite"]),
+ ("mcq","Read: \"The museum trip was educational. We saw dinosaur bones, ancient coins, and old paintings.\" Which detail supports that it was educational?","We saw dinosaur bones.",["The bus was late.","Lunch was good.","It was sunny."]),
+ ("mcq","Read: \"My brother is helpful. He carries groceries, walks the dog, and helps with homework.\" A supporting detail is that he:","walks the dog",["watches TV all day","is tall","likes pizza"]),
+ ("mcq","Read: \"The beach was crowded. Towels covered the sand, lines formed at the snack bar, and the water was full of swimmers.\" Which detail shows it was crowded?","Lines formed at the snack bar.",["The sky was blue.","It was July.","We brought a ball."]),
+ ("mcq","Read: \"The recipe was simple. It needed only three steps and four ingredients.\" Which detail supports that it was simple?","It needed only three steps.",["It tasted sweet.","The bowl was red.","Mom smiled."]),
+ ("mcq","Read: \"Winter sports are exciting. People ski down hills, skate on ice, and slide on sleds.\" A supporting detail is that people:","skate on ice",["swim in pools","pick flowers","fly kites"]),
+ ("fill","Read: \"The party was lively: music played, kids danced, and balloons floated everywhere.\" Name one detail that made the party lively. (one word)","music"),
+],
+"sequence": [
+ ("mcq","Read: \"Ana woke up, brushed her teeth, ate cereal, and caught the bus.\" What did Ana do right BEFORE eating cereal?","brushed her teeth",["caught the bus","went to sleep","did homework"]),
+ ("mcq","Read: \"First fill the pot with water. Next turn on the stove. Then add the pasta.\" What is the SECOND step?","turn on the stove",["add the pasta","fill the pot","eat dinner"]),
+ ("mcq","Read: \"The caterpillar ate leaves, formed a chrysalis, and became a butterfly.\" What happened LAST?","it became a butterfly",["it ate leaves","it formed a chrysalis","it laid eggs"]),
+ ("mcq","Read: \"He turned off the lights, climbed into bed, and fell asleep.\" What did he do FIRST?","turned off the lights",["fell asleep","climbed into bed","woke up"]),
+ ("mcq","Read: \"We washed the car, dried it, and then waxed it.\" What came right AFTER washing?","drying it",["waxing it","driving it","parking it"]),
+ ("mcq","Read: \"Plant the bulb in fall. It rests in winter. It blooms in spring.\" When does it bloom?","in spring",["in fall","in winter","at night"]),
+ ("mcq","Read: \"She read the directions, gathered the parts, and built the model.\" What did she do BEFORE building?","gathered the parts",["painted it","sold it","broke it"]),
+ ("mcq","Read: \"The light turned green, the cars moved, and we crossed at the corner.\" What happened FIRST?","the light turned green",["we crossed","the cars stopped","it got dark"]),
+ ("mcq","Read: \"Mix the dry stuff, add the eggs, then pour it into the pan.\" What is the LAST step listed?","pour it into the pan",["mix the dry stuff","add the eggs","wash dishes"]),
+ ("fill","Read: \"First you tie your left shoe, next your right shoe, then you go outside.\" What do you do right after the left shoe? Tie your ____ shoe. (one word)","right"),
+],
+"cause-and-effect": [
+ ("mcq","Read: \"The power went out, so we lit candles.\" What was the CAUSE?","the power went out",["we lit candles","it was morning","the lights were on"]),
+ ("mcq","Read: \"She watered the plant every day, so it grew tall.\" What was the EFFECT?","the plant grew tall",["she forgot it","it died","she moved"]),
+ ("mcq","Read: \"Because the alarm didn't ring, Max was late.\" Why was Max late?","the alarm didn't ring",["he ran fast","he was early","he ate lunch"]),
+ ("mcq","Read: \"The team practiced hard, so they won the championship.\" What caused the win?","they practiced hard",["it rained","they were tired","the bus was late"]),
+ ("mcq","Read: \"He dropped the glass, so it shattered.\" What was the effect of dropping it?","it shattered",["it floated","it grew","nothing happened"]),
+ ("mcq","Read: \"Because it was freezing, the pond turned to ice.\" Why did the pond freeze?","it was freezing cold",["it was hot","it was windy only","it was sunny"]),
+ ("mcq","Read: \"The volcano erupted, so people moved to safety.\" What was the cause that made people move?","the volcano erupted",["it was lunchtime","the road was new","the sky was blue"]),
+ ("mcq","Read: \"The seeds got sunlight and water, so they sprouted.\" What was the effect?","the seeds sprouted",["the seeds dried up","nothing grew","the soil froze"]),
+ ("mcq","Read: \"Because he studied the map, he didn't get lost.\" Why didn't he get lost?","he studied the map",["he ran","he closed his eyes","he was tired"]),
+ ("fill","Read: \"It rained for hours, so the river ____ over its banks.\" Fill the effect word. (one word, starts with f)","flooded"),
+],
+"context-clues": [
+ ("mcq","Read: \"The fragile vase broke the moment it slipped from her hands.\" What does \"fragile\" mean?","easily broken",["very heavy","brightly colored","very old"]),
+ ("mcq","Read: \"After the marathon he felt feeble and could barely stand.\" What does \"feeble\" mean?","weak",["strong","fast","happy"]),
+ ("mcq","Read: \"The aroma of fresh bread filled the bakery.\" What does \"aroma\" mean?","a smell",["a sound","a color","a price"]),
+ ("mcq","Read: \"The two friends were inseparable and went everywhere together.\" What does \"inseparable\" mean?","always together",["far apart","angry","silent"]),
+ ("mcq","Read: \"The instructions were so vague that nobody knew what to do.\" What does \"vague\" mean?","not clear",["very clear","very loud","colorful"]),
+ ("mcq","Read: \"He gobbled his food quickly because he was famished.\" What does \"famished\" mean?","very hungry",["very full","very tired","very tall"]),
+ ("mcq","Read: \"The crowd was enormous, filling the entire stadium.\" What does \"enormous\" mean?","very large",["very small","very quiet","very fast"]),
+ ("mcq","Read: \"The cautious driver slowed down near the school.\" What does \"cautious\" mean?","careful",["reckless","sleepy","angry"]),
+ ("mcq","Read: \"The grumpy old cat hissed at everyone.\" What does \"grumpy\" mean?","in a bad mood",["very happy","very fast","very large"]),
+ ("fill","Read: \"The path was visible even in the dark because of the bright moon.\" What does \"visible\" mean? Able to be ____. (one word)","seen"),
+],
+"making-inferences": [
+ ("mcq","Read: \"Tom's shoes were muddy and his soccer ball was by the door.\" What can you infer?","Tom was playing soccer outside.",["Tom was sleeping.","Tom was reading.","Tom was cooking."]),
+ ("mcq","Read: \"The candles were lit and a wrapped box sat on the table with a 'Happy Birthday' banner.\" What can you infer?","Someone is having a birthday.",["It is a school day.","Someone is leaving forever.","It is breakfast."]),
+ ("mcq","Read: \"Lily kept yawning and rubbing her eyes during the late movie.\" What can you infer?","Lily is sleepy.",["Lily is hungry.","Lily is angry.","Lily is cold."]),
+ ("mcq","Read: \"The plants drooped and the soil was dry and cracked.\" What can you infer?","The plants need water.",["The plants got too much water.","It just rained.","The plants are new."]),
+ ("mcq","Read: \"People opened umbrellas and ran for cover.\" What can you infer?","It started to rain.",["It is sunny.","It is snowing lightly.","It is night."]),
+ ("mcq","Read: \"The kitchen smelled of cookies and the oven timer was beeping.\" What can you infer?","Someone baked cookies.",["Someone is sleeping.","The power is out.","It is winter."]),
+ ("mcq","Read: \"Sam packed sunscreen, a towel, and a beach ball.\" Where is Sam probably going?","to the beach",["to school","to bed","to the dentist"]),
+ ("mcq","Read: \"The classroom was silent and every desk was empty.\" What can you infer?","No students are there right now.",["Class is very full.","There is a party.","It is the middle of class."]),
+ ("mcq","Read: \"Dad checked the recipe, tied his apron, and turned on the stove.\" What can you infer?","Dad is going to cook.",["Dad is going to sleep.","Dad is leaving.","Dad is reading a novel."]),
+ ("fill","Read: \"She wore a heavy coat, a scarf, and mittens before stepping out.\" Based on the clues, it is probably ____ outside. (one word)","cold"),
+],
+"authors-purpose": [
+ ("mcq","An author writes \"How to Plant a Garden in 5 Easy Steps.\" The purpose is to:","instruct",["entertain with a story","persuade you to move","tell a joke"]),
+ ("mcq","A silly poem about a dancing hippo is written to:","entertain",["inform","instruct","persuade"]),
+ ("mcq","A flyer that says \"Vote YES for the new playground!\" is meant to:","persuade",["inform only","entertain","give a recipe"]),
+ ("mcq","An encyclopedia entry about sharks is written to:","inform",["make you laugh","sell shark toys","tell a fairy tale"]),
+ ("mcq","A sign that reads \"Please recycle to save our planet\" is mainly trying to:","persuade",["report news","tell a story","teach spelling"]),
+ ("mcq","The instructions on a board-game box are written to:","instruct",["entertain","persuade","report scores"]),
+ ("mcq","A bedtime story about a brave knight is written to:","entertain",["inform","instruct","persuade"]),
+ ("mcq","A news report about a local flood is mainly written to:","inform",["entertain","persuade","tell a joke"]),
+ ("mcq","A commercial saying \"Our cereal is the tastiest!\" is meant to:","persuade",["inform only","instruct","tell a true story"]),
+ ("fill","If an author mainly wants to make readers laugh and enjoy a story, the purpose is to ____. (one word)","entertain"),
+],
+"compare-and-contrast": [
+ ("mcq","Read: \"A van and a motorcycle both have engines, but a van can carry more people.\" One way they are ALIKE is:","both have engines",["both carry many people","both have two wheels","both are tiny"]),
+ ("mcq","Read: \"Apples are crunchy, while bananas are soft.\" This sentence shows a:","difference",["similarity","sequence","cause"]),
+ ("mcq","Read: \"Both whales and fish live in water.\" The word that signals they are alike is:","both",["but","unlike","while"]),
+ ("mcq","Read: \"A pencil uses graphite, but a crayon uses wax.\" How are they DIFFERENT?","what they are made of",["both write","both are tools","both are long"]),
+ ("mcq","Read: \"Unlike summer, winter has short days.\" The word \"unlike\" signals a:","difference",["similarity","sequence","cause"]),
+ ("mcq","Read: \"Soccer and basketball are both team sports with a ball and a goal to score.\" A similarity is that both:","are team sports with a ball",["use a net only","are played on ice","have no rules"]),
+ ("mcq","Read: \"The mouse is tiny, whereas the elephant is huge.\" This compares them by:","size",["color","price","spelling"]),
+ ("mcq","Which word signals things are ALIKE?","similarly",["however","unlike","but"]),
+ ("mcq","Read: \"Both books are mysteries, but one is set in space and the other under the sea.\" The difference is the:","setting",["genre","author's name","length only"]),
+ ("fill","The word \"different\" or \"unlike\" usually signals that two things are being ____ (compared or contrasted?). ","contrasted"),
+],
+"fact-and-opinion": [
+ ("mcq","Which sentence is a FACT?","The Sun rises in the east.",["Sunsets are the prettiest.","Mornings are the worst.","Orange is the best color."]),
+ ("mcq","Which sentence is an OPINION?","Soccer is more fun than any other sport.",["A soccer team has 11 players.","Saturday comes after Friday.","Ice is frozen water."]),
+ ("mcq","Which is a FACT?","A year has 365 days.",["History is boring.","Dogs are cuter than cats.","Pizza is the best food."]),
+ ("mcq","Which is an OPINION?","Math class is too hard.",["Ten is an even number.","Birds lay eggs.","The library has books."]),
+ ("mcq","\"Mount Everest is the tallest mountain on Earth.\" This is a:","fact",["opinion","question","joke"]),
+ ("mcq","\"Vanilla is better than chocolate.\" This is an:","opinion",["fact","measurement","rule"]),
+ ("mcq","Which CAN be proven true?","Water boils at 100 degrees Celsius.",["Recess should be longer.","This song is amazing.","Green is calming."]),
+ ("mcq","Which word is a clue that a sentence is an opinion?","favorite",["measures","equals","contains"]),
+ ("mcq","Which is a FACT?","Bats are mammals.",["Bats are scary.","Bats are ugly.","Caves are creepy."]),
+ ("fill","A statement that can be checked and proven true is called a ____. (one word)","fact"),
+],
+"synonyms-and-antonyms": [
+ ("mcq","Which word is a SYNONYM for \"big\"?","large",["tiny","small","short"]),
+ ("mcq","Which word is an ANTONYM of \"happy\"?","sad",["glad","joyful","cheerful"]),
+ ("mcq","A synonym for \"quick\" is:","fast",["slow","late","still"]),
+ ("mcq","The opposite of \"open\" is:","closed",["wide","ajar","unlocked"]),
+ ("mcq","A synonym for \"angry\" is:","mad",["calm","happy","sleepy"]),
+ ("mcq","An antonym for \"loud\" is:","quiet",["noisy","booming","blaring"]),
+ ("mcq","Which means almost the same as \"pretty\"?","beautiful",["ugly","plain","dull"]),
+ ("mcq","The opposite of \"start\" is:","stop",["begin","launch","open"]),
+ ("mcq","A synonym for \"easy\" is:","simple",["hard","tricky","tough"]),
+ ("fill","Write a one-word ANTONYM (opposite) of \"hot\". ","cold"),
+],
+}
+
+# Merge enrichment into the base banks (10 + 10 = 20 per topic).
+for _k in SCIENCE:
+    SCIENCE[_k] = SCIENCE[_k] + SCIENCE_EXTRA[_k]
+for _k in READING:
+    READING[_k] = READING[_k] + READING_EXTRA[_k]
+
+
 # ===================================================== TOPIC REGISTRY (ordered)
 # (subject_slug, topic_slug, name, standard_code, teach_text, source)
 # source: a generator callable rng->[q]  OR  an authored bank (list of tuples)
@@ -745,7 +1019,7 @@ def make_questions(source, rng):
         qs = source(rng)
     else:
         qs = build_bank(source, rng)
-    assert len(qs) == 10, "every worksheet needs exactly 10 questions"
+    assert len(qs) == QUESTIONS_PER_TOPIC, f"every worksheet needs {QUESTIONS_PER_TOPIC} questions"
     for q in qs:
         if q["type"] == "mcq":
             ids = [c["id"] for c in q["choices"]]
