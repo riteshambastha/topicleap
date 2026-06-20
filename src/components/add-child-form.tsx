@@ -68,7 +68,8 @@ export function AddChildForm() {
         <Label>Grade</Label>
         <GradePicker value={gradeLevel} onChange={setGradeLevel} />
         <p className="text-xs text-slate-500">
-          Grade 4 has content today; other grades are coming soon.
+          Kindergarten, Grade 3, and Grade 4 have content today; more grades are
+          coming soon.
         </p>
       </div>
       <div className="grid gap-1.5">

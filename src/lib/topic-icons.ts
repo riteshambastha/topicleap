@@ -72,6 +72,31 @@ const TOPIC_ICONS: Record<string, string> = {
   "story-sequence": "➡️",
   "making-predictions": "🔮",
   "character-and-setting": "🎭",
+  // ----- Kindergarten additions -----
+  "counting-to-10": "🔟",
+  "number-recognition": "🔢",
+  "shapes-basic": "🔷",
+  "more-and-fewer": "📊",
+  "adding-to-5": "➕",
+  patterns: "🔁",
+  colors: "🌈",
+  "rhyming-words": "🎵",
+  "same-and-different": "🔍",
+  "beginning-sounds": "🔊",
+  "sight-words": "👀",
+  opposites: "↔️",
+  "living-and-nonliving": "🌱",
+  "five-senses": "🖐️",
+  "weather-basics": "⛅",
+  "animals-and-sounds": "🐾",
+  "what-plants-need": "🌻",
+  "day-and-night": "🌗",
+  "uppercase-letters": "🔠",
+  "lowercase-letters": "🔡",
+  "match-upper-and-lower": "🔤",
+  "alphabet-order": "🔤",
+  vowels: "🅰️",
+  "beginning-letter": "🔡",
 };
 
 const SUBJECT_FALLBACK: Record<string, string> = {
@@ -79,6 +104,7 @@ const SUBJECT_FALLBACK: Record<string, string> = {
   science: "🔬",
   reading: "📖",
   writing: "✏️",
+  letters: "🔤",
 };
 
 export function topicIcon(slug: string, subjectSlug?: string): string {
@@ -91,6 +117,7 @@ export const SUBJECT_GRADIENT: Record<string, string> = {
   science: "from-emerald-500 to-teal-500",
   reading: "from-sky-500 to-blue-500",
   writing: "from-amber-500 to-orange-500",
+  letters: "from-rose-500 to-pink-500",
 };
 
 export function subjectGradient(subjectSlug?: string): string {

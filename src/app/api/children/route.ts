@@ -45,8 +45,8 @@ export async function POST(req: Request) {
   if (!/^\d{4,6}$/.test(pin)) {
     return NextResponse.json({ error: "PIN must be 4–6 digits." }, { status: 400 });
   }
-  if (!Number.isInteger(gradeLevel) || gradeLevel < 1 || gradeLevel > 12) {
-    return NextResponse.json({ error: "Grade must be between 1 and 12." }, { status: 400 });
+  if (!Number.isInteger(gradeLevel) || gradeLevel < 0 || gradeLevel > 12) {
+    return NextResponse.json({ error: "Please pick a valid grade." }, { status: 400 });
   }
 
   const admin = createAdminClient();

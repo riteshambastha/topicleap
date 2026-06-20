@@ -4,6 +4,7 @@ import { getCurrentParent } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
 import { EditChildForm } from "@/components/edit-child-form";
+import { gradeLabel } from "@/lib/grade-label";
 import { Card, CardContent } from "@/components/ui/card";
 
 type AttemptRow = {
@@ -110,7 +111,7 @@ export default async function ChildReportPage({
                 {child.display_name}
               </h1>
               <p className="text-slate-500">
-                @{child.username} · Grade {child.grade_level}
+                @{child.username} · {gradeLabel(child.grade_level)}
               </p>
             </div>
             <div className="rounded-2xl bg-amber-50 px-5 py-3 text-center">

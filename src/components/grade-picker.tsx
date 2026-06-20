@@ -1,6 +1,8 @@
 "use client";
 
-const GRADES = [1, 2, 3, 4, 5, 6, 7, 8];
+import { gradeShort } from "@/lib/grade-label";
+
+const GRADES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
 /** A friendly grid of grade pills instead of a plain dropdown. */
 export function GradePicker({
@@ -13,7 +15,7 @@ export function GradePicker({
   grades?: number[];
 }) {
   return (
-    <div role="group" aria-label="Grade" className="grid grid-cols-4 gap-2">
+    <div role="group" aria-label="Grade" className="grid grid-cols-3 gap-2 sm:grid-cols-5">
       {grades.map((g) => {
         const active = g === value;
         return (
@@ -33,9 +35,11 @@ export function GradePicker({
                 active ? "text-white/80" : "text-slate-400"
               }`}
             >
-              Grade
+              {g === 0 ? "Grade" : "Grade"}
             </span>
-            <span className="text-xl font-extrabold leading-none">{g}</span>
+            <span className="text-xl font-extrabold leading-none">
+              {gradeShort(g)}
+            </span>
           </button>
         );
       })}

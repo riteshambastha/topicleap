@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { VIEW_GRADE_COOKIE } from "@/lib/view-grade";
+import { VIEW_GRADE_COOKIE } from "@/lib/view-grade-cookie";
+import { gradeShort, gradeLabel } from "@/lib/grade-label";
 
-const GRADES = [1, 2, 3, 4, 5, 6, 7, 8];
+const GRADES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
 /**
  * Lets a kid browse other grades "for fun" without changing their home grade.
@@ -41,7 +42,7 @@ export function GradeExplorer({
           🔭 Explore a grade
           {viewGrade !== homeGrade && (
             <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
-              exploring Grade {viewGrade}
+              exploring {gradeLabel(viewGrade)}
             </span>
           )}
         </p>
@@ -51,11 +52,11 @@ export function GradeExplorer({
             onClick={reset}
             className="text-xs font-semibold text-indigo-600 hover:underline"
           >
-            ⌂ Back to my grade ({homeGrade})
+            ⌂ Back to my grade ({gradeShort(homeGrade)})
           </button>
         )}
       </div>
-      <div className="grid grid-cols-8 gap-2">
+      <div className="grid grid-cols-5 gap-2 sm:grid-cols-9">
         {GRADES.map((g) => {
           const isHome = g === homeGrade;
           const active = g === viewGrade;
@@ -68,8 +69,8 @@ export function GradeExplorer({
               onClick={() => pick(g)}
               title={
                 has
-                  ? `Grade ${g}${isHome ? " (your grade)" : ""}`
-                  : `Grade ${g} — coming soon`
+                  ? `${gradeLabel(g)}${isHome ? " (your grade)" : ""}`
+                  : `${gradeLabel(g)} — coming soon`
               }
               className={`relative flex flex-col items-center justify-center rounded-xl border-2 py-1.5 text-sm font-extrabold transition ${
                 active
@@ -79,7 +80,7 @@ export function GradeExplorer({
                     : "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300"
               }`}
             >
-              {g}
+              {gradeShort(g)}
               {isHome && (
                 <span className="absolute -right-1 -top-1 text-[10px]">⭐</span>
               )}

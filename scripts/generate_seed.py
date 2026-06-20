@@ -36,10 +36,13 @@ _ASCII_MAP = {
 
 
 def ascii_clean(s: str) -> str:
-    """Force ASCII so the SQL survives copy/paste into any editor."""
+    """Normalize troublesome punctuation (curly quotes, math symbols, dashes)
+    to plain ASCII so the SQL survives copy/paste. Other Unicode such as emoji
+    is preserved on purpose (Kindergarten questions are picture-based) and is
+    safe inside the dollar-quoted string literals we emit."""
     for k, v in _ASCII_MAP.items():
         s = s.replace(k, v)
-    return s.encode("ascii", "ignore").decode("ascii")
+    return s
 
 
 def sql_str(s: str) -> str:
@@ -359,7 +362,7 @@ def g_end_punctuation(rng):
 
 # ===================================================== AUTHORED BANK HELPERS
 
-def build_bank(raw, rng):
+def build_bank(raw, rng, n=QUESTIONS_PER_TOPIC):
     """Convert authored tuples into question dicts.
     ('mcq', prompt, correct, [d1,d2,d3]) or ('fill', prompt, answer)."""
     out = []
@@ -370,7 +373,7 @@ def build_bank(raw, rng):
         else:
             _, prompt, answer = item
             out.append(fill(prompt, answer))
-    assert len(out) == QUESTIONS_PER_TOPIC, f"bank must have {QUESTIONS_PER_TOPIC}, got {len(out)}"
+    assert len(out) == n, f"bank must have {n}, got {len(out)}"
     return out
 
 
@@ -1015,12 +1018,12 @@ TOPICS = [
 ]
 
 
-def make_questions(source, rng):
+def make_questions(source, rng, n=QUESTIONS_PER_TOPIC):
     if callable(source):
         qs = source(rng)
     else:
-        qs = build_bank(source, rng)
-    assert len(qs) == QUESTIONS_PER_TOPIC, f"every worksheet needs {QUESTIONS_PER_TOPIC} questions"
+        qs = build_bank(source, rng, n)
+    assert len(qs) == n, f"every worksheet needs {n} questions"
     for q in qs:
         if q["type"] == "mcq":
             ids = [c["id"] for c in q["choices"]]
@@ -1059,19 +1062,21 @@ def build_lesson_steps(name, teach, questions):
     return steps
 
 
-def emit_curriculum(grade, topics):
+def emit_curriculum(grade, topics, subjects=SUBJECTS,
+                    worksheet_size=WORKSHEET_SIZE, qpt=QUESTIONS_PER_TOPIC):
     """Emit an idempotent, non-destructive seed for one grade's curriculum."""
+    label = "Kindergarten" if grade == 0 else f"Grade {grade}"
     out = []
     p = out.append
     p("-- =====================================================================")
-    p(f"-- TopicLeap - Grade {grade} full curriculum seed (generated)")
-    p("-- 4 subjects x 10 topics, each with a lesson + worksheets of 5 questions.")
+    p(f"-- TopicLeap - {label} full curriculum seed (generated)")
+    p(f"-- Lessons + worksheets of {worksheet_size} questions each.")
     p("-- Idempotent & non-destructive: re-running never duplicates and never")
     p("-- touches a topic that already has content.")
     p("-- Run AFTER 0001_init.sql, in the Supabase SQL Editor.")
     p("-- =====================================================================\n")
 
-    for slug, name, order in SUBJECTS:
+    for slug, name, order in subjects:
         p(f"insert into public.subjects (slug, name, sort_order) values "
           f"({sql_str(slug)}, {sql_str(name)}, {order})")
         p("on conflict (slug) do update set name = excluded.name, "
@@ -1083,7 +1088,7 @@ def emit_curriculum(grade, topics):
         order_counter[subj_slug] = order_counter.get(subj_slug, 0) + 1
         torder = order_counter[subj_slug]
         rng = random.Random(f"g{grade}-{tslug}")
-        questions = make_questions(source, rng)
+        questions = make_questions(source, rng, qpt)
         steps = build_lesson_steps(name, teach, questions)
         steps_json = json.dumps(steps, ensure_ascii=True)
         desc = teach
@@ -1111,10 +1116,10 @@ def emit_curriculum(grade, topics):
         # Split the topic's questions into worksheets of WORKSHEET_SIZE,
         # titled "Worksheet 1", "Worksheet 2", ... Each insert is guarded so
         # re-running never duplicates.
-        num_ws = (len(questions) + WORKSHEET_SIZE - 1) // WORKSHEET_SIZE
+        num_ws = (len(questions) + worksheet_size - 1) // worksheet_size
         for c in range(num_ws):
             ws_title = f"Worksheet {c + 1}"
-            chunk = questions[c * WORKSHEET_SIZE:(c + 1) * WORKSHEET_SIZE]
+            chunk = questions[c * worksheet_size:(c + 1) * worksheet_size]
 
             # worksheet (guarded by topic + title)
             p("insert into public.worksheets (topic_id, title, grade_level, sort_order)")

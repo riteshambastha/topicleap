@@ -4,6 +4,7 @@ import { getCurrentParent } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AddChildForm } from "@/components/add-child-form";
 import { LogoutButton } from "@/components/logout-button";
+import { gradeLabel } from "@/lib/grade-label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function ParentDashboard() {
@@ -49,7 +50,7 @@ export default async function ParentDashboard() {
                         <div>
                           <p className="font-semibold">{c.display_name}</p>
                           <p className="text-sm text-slate-500">
-                            @{c.username} · Grade {c.grade_level}
+                            @{c.username} · {gradeLabel(c.grade_level)}
                           </p>
                         </div>
                       </div>

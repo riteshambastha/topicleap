@@ -4,6 +4,7 @@ import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getProgress, isTopicComplete } from "@/lib/progress";
 import { getViewGrade } from "@/lib/view-grade";
+import { gradeLabel } from "@/lib/grade-label";
 import { topicIcon } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
 import { GlobalSearch, type SearchItem } from "@/components/global-search";
@@ -16,6 +17,7 @@ const THEME: Record<string, { emoji: string; grad: string; soft: string }> = {
   science: { emoji: "🔬", grad: "from-emerald-500 to-teal-500", soft: "bg-emerald-50" },
   reading: { emoji: "📖", grad: "from-sky-500 to-blue-500", soft: "bg-sky-50" },
   writing: { emoji: "✏️", grad: "from-amber-500 to-orange-500", soft: "bg-amber-50" },
+  letters: { emoji: "🔤", grad: "from-rose-500 to-pink-500", soft: "bg-rose-50" },
 };
 const FALLBACK = { emoji: "📚", grad: "from-slate-500 to-slate-600", soft: "bg-slate-50" };
 
@@ -100,7 +102,7 @@ export default async function LearnHome() {
         <span className="text-lg font-bold text-indigo-700">TopicLeap</span>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-slate-500 sm:inline">
-            Hi, {child.display_name}! · Grade {child.grade_level}
+            Hi, {child.display_name}! · {gradeLabel(child.grade_level)}
           </span>
           <Link
             href="/learn/progress"
@@ -128,17 +130,19 @@ export default async function LearnHome() {
         <h1 className="mb-5 text-2xl font-extrabold sm:text-3xl">
           {viewGrade === child.grade_level
             ? "Pick a subject"
-            : `Exploring Grade ${viewGrade}`}
+            : `Exploring ${gradeLabel(viewGrade)}`}
         </h1>
 
         {(topics ?? []).length === 0 && (
           <div className="mb-6 rounded-2xl border border-white/60 bg-white/70 p-6 text-center text-slate-600 backdrop-blur">
-            No topics for Grade {viewGrade} yet — more grades are coming soon! 🚀
+            No topics for {gradeLabel(viewGrade)} yet — more grades are coming soon! 🚀
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {(subjects ?? []).map((s) => {
+          {(subjects ?? [])
+            .filter((s) => (topicsBySubject.get(s.id) ?? []).length > 0)
+            .map((s) => {
             const theme = THEME[s.slug] ?? FALLBACK;
             const subjTopics = topicsBySubject.get(s.id) ?? [];
             const total = subjTopics.length;

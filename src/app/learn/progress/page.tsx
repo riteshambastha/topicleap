@@ -4,6 +4,7 @@ import { getCurrentChild } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getProgress, isTopicComplete } from "@/lib/progress";
 import { getKidStats, firstName, fallbackSummary } from "@/lib/summary";
+import { gradeLabel } from "@/lib/grade-label";
 import { subjectGradient } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,17 +68,19 @@ export default async function ProgressPage() {
     if (isTopicComplete(ids, completedWorksheets)) completedTopics.add(tid);
   }
 
-  const perSubject = (subjects ?? []).map((s) => {
-    const subjTopics = (topics ?? []).filter((t) => t.subject_id === s.id);
-    const done = subjTopics.filter((t) => completedTopics.has(t.id)).length;
-    return {
-      name: s.name,
-      grad: subjectGradient(s.slug),
-      done,
-      total: subjTopics.length,
-      pct: subjTopics.length ? Math.round((done / subjTopics.length) * 100) : 0,
-    };
-  });
+  const perSubject = (subjects ?? [])
+    .map((s) => {
+      const subjTopics = (topics ?? []).filter((t) => t.subject_id === s.id);
+      const done = subjTopics.filter((t) => completedTopics.has(t.id)).length;
+      return {
+        name: s.name,
+        grad: subjectGradient(s.slug),
+        done,
+        total: subjTopics.length,
+        pct: subjTopics.length ? Math.round((done / subjTopics.length) * 100) : 0,
+      };
+    })
+    .filter((s) => s.total > 0);
 
   const statCards = [
     { label: "Points", value: stats.totalPoints, suffix: "⭐", tint: "from-amber-400 to-orange-500" },
@@ -132,7 +135,7 @@ export default async function ProgressPage() {
           {/* per-subject progress */}
           <section>
             <h2 className="mb-3 text-lg font-bold text-slate-700">
-              Subjects · Grade {child.grade_level}
+              Subjects · {gradeLabel(child.grade_level)}
             </h2>
             <div className="grid gap-3">
               {perSubject.map((s) => (

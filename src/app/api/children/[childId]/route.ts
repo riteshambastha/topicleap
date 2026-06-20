@@ -59,8 +59,8 @@ export async function PATCH(
   // Grade
   if (body.gradeLevel !== undefined) {
     const gradeLevel = Number(body.gradeLevel);
-    if (!Number.isInteger(gradeLevel) || gradeLevel < 1 || gradeLevel > 12) {
-      return NextResponse.json({ error: "Grade must be between 1 and 12." }, { status: 400 });
+    if (!Number.isInteger(gradeLevel) || gradeLevel < 0 || gradeLevel > 12) {
+      return NextResponse.json({ error: "Please pick a valid grade." }, { status: 400 });
     }
     updates.grade_level = gradeLevel;
   }
