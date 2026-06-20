@@ -32,6 +32,25 @@ export default async function Home() {
 
   return (
     <div className="flex flex-1 flex-col bg-white">
+      {/* ---------------- ANNOUNCEMENT BAR ---------------- */}
+      <div className="bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-white">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-2 gap-y-1 px-4 py-2.5 text-center text-sm font-semibold sm:text-base">
+          <span aria-hidden>☀️ 🏕️</span>
+          <span>
+            <span className="font-extrabold">Ready for Summer Camp!</span>{" "}
+            Let your kid study a little along with all the fun —{" "}
+            <span className="font-extrabold">all for FREE.</span> Built by a parent,
+            for parents &amp; their kids.
+          </span>
+          <Link
+            href="/signup"
+            className="rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-orange-600 shadow-sm transition hover:bg-white sm:text-sm"
+          >
+            Join free →
+          </Link>
+        </div>
+      </div>
+
       {/* ---------------- NAV ---------------- */}
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur">
         <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
