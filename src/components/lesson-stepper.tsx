@@ -101,12 +101,18 @@ export function LessonStepper({
         {/* colorful top strip */}
         <div className={`h-2 w-full bg-gradient-to-r ${style.accent}`} />
         <CardContent className="p-6 sm:p-8">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-bold ${style.badge}`}
-          >
-            <span>{style.emoji}</span>
-            {style.label}
-          </span>
+          <div className="flex items-center justify-between gap-3">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-bold ${style.badge}`}
+            >
+              <span>{style.emoji}</span>
+              {style.label}
+            </span>
+            <ListenButton
+              text={`${step.title}. ${step.body}`}
+              className="shrink-0"
+            />
+          </div>
           <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
             {step.title}
           </h2>
