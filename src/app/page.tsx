@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentChild, getCurrentParent } from "@/lib/auth";
+import { BannerCarousel } from "@/components/banner-carousel";
 
 const SUBJECTS = [
   { name: "Math", emoji: "🔢", grad: "from-indigo-500 to-violet-500", blurb: "Counting, place value, multiplication, fractions, area & more." },
@@ -61,98 +62,8 @@ export default async function Home() {
       </header>
 
       <main className="flex-1">
-        {/* ---------------- HERO ---------------- */}
-        <section className="relative overflow-hidden">
-          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-sky-50 to-fuchsia-50" />
-            <div className="tl-blob absolute -left-24 -top-24 h-80 w-80 rounded-full bg-indigo-300/40 blur-3xl" />
-            <div className="tl-blob absolute right-[-60px] top-20 h-72 w-72 rounded-full bg-fuchsia-300/40 blur-3xl" style={{ animationDelay: "-6s" }} />
-            <div className="tl-blob absolute bottom-[-80px] left-1/3 h-96 w-96 rounded-full bg-amber-200/40 blur-3xl" style={{ animationDelay: "-12s" }} />
-          </div>
-
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/70 px-4 py-1.5 text-sm font-semibold text-indigo-700 backdrop-blur">
-                ⭐ Kindergarten → Grade 8
-              </span>
-              <h1 className="font-display mt-5 text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                Where kids{" "}
-                <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-                  love
-                </span>{" "}
-                to learn.
-              </h1>
-              <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl">
-                Interactive, step-by-step lessons and auto-graded worksheets that
-                turn practice into play. Kids learn and earn points; parents see
-                real progress.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:-translate-y-0.5 hover:bg-indigo-700"
-                >
-                  Get started free →
-                </Link>
-                <Link
-                  href="/kids"
-                  className="inline-flex items-center justify-center rounded-2xl border-2 border-slate-200 bg-white px-7 py-3.5 text-base font-bold text-slate-800 transition hover:border-indigo-300 hover:bg-indigo-50"
-                >
-                  🎒 I&apos;m a learner
-                </Link>
-              </div>
-              <p className="mt-4 text-sm text-slate-500">
-                No credit card needed · Free to start · Built for families
-              </p>
-            </div>
-
-            {/* hero mock card */}
-            <div className="relative">
-              <div className="absolute -right-4 -top-6 rotate-6 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-amber-600 shadow-lg">
-                ⭐ +50 points!
-              </div>
-              <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-indigo-600/10">
-                <div className="h-2 w-full bg-gradient-to-r from-indigo-500 to-violet-500" />
-                <div className="p-6">
-                  <div className="mb-1 flex items-center justify-between text-xs font-bold text-slate-400">
-                    <span>WORKSHEET 1 OF 4</span>
-                    <span>75%</span>
-                  </div>
-                  <div className="mb-5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
-                  </div>
-                  <p className="text-lg font-bold text-slate-900">What is 3 × 24?</p>
-                  <div className="mt-4 grid grid-cols-2 gap-2.5">
-                    {[
-                      { l: "A", v: "72", ok: true },
-                      { l: "B", v: "64", ok: false },
-                      { l: "C", v: "96", ok: false },
-                      { l: "D", v: "68", ok: false },
-                    ].map((o) => (
-                      <div
-                        key={o.l}
-                        className={`flex items-center gap-2.5 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold ${
-                          o.ok
-                            ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-                            : "border-slate-200 text-slate-600"
-                        }`}
-                      >
-                        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-extrabold ${o.ok ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"}`}>
-                          {o.l}
-                        </span>
-                        {o.v}
-                        {o.ok && <span className="ml-auto">✅</span>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -bottom-5 -left-4 -rotate-3 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-indigo-600 shadow-lg">
-                🔊 Listen
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* ---------------- HERO BANNER SLIDER ---------------- */}
+        <BannerCarousel />
 
         {/* ---------------- STATS STRIP ---------------- */}
         <section className="border-y border-slate-200 bg-slate-50">
