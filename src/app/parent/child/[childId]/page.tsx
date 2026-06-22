@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
 import { EditChildForm } from "@/components/edit-child-form";
 import { gradeLabel } from "@/lib/grade-label";
+import { Logo } from "@/components/logo";
 import { Card, CardContent } from "@/components/ui/card";
 
 type AttemptRow = {
@@ -87,8 +88,10 @@ export default async function ChildReportPage({
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
-        <Link href="/parent" className="font-bold text-indigo-700">
-          ← TopicLeap · Parent
+        <Link href="/parent" className="inline-flex items-center gap-1.5" aria-label="Back to parent dashboard">
+          <span className="text-slate-400">←</span>
+          <Logo iconClass="h-7 w-7" textClass="text-lg" />
+          <span className="text-sm font-semibold text-slate-400">· Parent</span>
         </Link>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-slate-500 sm:inline">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentChild, getCurrentParent } from "@/lib/auth";
 import { BannerCarousel } from "@/components/banner-carousel";
+import { Logo } from "@/components/logo";
 
 const SUBJECTS = [
   { name: "Math", emoji: "🔢", grad: "from-indigo-500 to-violet-500", blurb: "Counting, place value, multiplication, fractions, area & more." },
@@ -54,8 +55,8 @@ export default async function Home() {
       {/* ---------------- NAV ---------------- */}
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur">
         <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/" className="font-display text-xl font-extrabold text-indigo-700">
-            🚀 TopicLeap
+          <Link href="/" aria-label="TopicLeap home">
+            <Logo iconClass="h-8 w-8" textClass="text-xl" />
           </Link>
           <div className="hidden items-center gap-7 text-sm font-semibold text-slate-600 md:flex">
             <a href="#how" className="hover:text-indigo-700">How it works</a>
@@ -286,7 +287,7 @@ export default async function Home() {
       {/* ---------------- FOOTER ---------------- */}
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
-          <span className="font-display font-extrabold text-indigo-700">🚀 TopicLeap</span>
+          <Logo iconClass="h-6 w-6" textClass="text-base" />
           <div className="flex flex-wrap items-center justify-center gap-5 text-sm font-medium text-slate-500">
             <a href="#how" className="hover:text-indigo-700">How it works</a>
             <a href="#subjects" className="hover:text-indigo-700">Subjects</a>

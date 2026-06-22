@@ -45,16 +45,57 @@ export function WorksheetRunner({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(0);
+  const [reported, setReported] = useState<Set<string>>(new Set());
+  const [reportingId, setReportingId] = useState<string | null>(null);
+  const [reportText, setReportText] = useState("");
+  const [reportBusy, setReportBusy] = useState(false);
 
-  const answeredCount = useMemo(
-    () => questions.filter((q) => (responses[q.id] ?? "").trim().length > 0).length,
-    [questions, responses],
+  // Reported questions are skipped — not required and not scored.
+  const required = useMemo(
+    () => questions.filter((q) => !reported.has(q.id)),
+    [questions, reported],
   );
-  const allAnswered = answeredCount === questions.length;
-  const progress = Math.round((answeredCount / questions.length) * 100);
+  const answeredCount = useMemo(
+    () => required.filter((q) => (responses[q.id] ?? "").trim().length > 0).length,
+    [required, responses],
+  );
+  const allAnswered = answeredCount === required.length;
+  const progress = required.length
+    ? Math.round((answeredCount / required.length) * 100)
+    : 100;
 
   function setResponse(id: string, value: string) {
     setResponses((r) => ({ ...r, [id]: value }));
+  }
+
+  async function sendReport(qId: string) {
+    setReportBusy(true);
+    try {
+      await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questionId: qId, worksheetId, message: reportText }),
+      });
+    } catch {
+      // best-effort; still let the kid skip it
+    }
+    setReported((s) => new Set(s).add(qId));
+    setResponses((r) => {
+      const n = { ...r };
+      delete n[qId];
+      return n;
+    });
+    setReportingId(null);
+    setReportText("");
+    setReportBusy(false);
+  }
+
+  function undoReport(qId: string) {
+    setReported((s) => {
+      const n = new Set(s);
+      n.delete(qId);
+      return n;
+    });
   }
 
   async function submit() {
@@ -68,6 +109,7 @@ export function WorksheetRunner({
           questionId: q.id,
           response: responses[q.id] ?? null,
         })),
+        reported: Array.from(reported),
       }),
     });
     const data = await res.json();
@@ -135,6 +177,22 @@ export function WorksheetRunner({
         <div className="grid gap-3">
           {questions.map((q, idx) => {
             const r = resultById.get(q.id);
+            if (!r) {
+              // reported & skipped — not scored
+              return (
+                <div key={q.id} className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-semibold text-slate-800">
+                      {idx + 1}. {q.prompt}
+                    </p>
+                    <span className="text-2xl">⚑</span>
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-amber-700">
+                    Reported — skipped, not scored. Thanks for telling us!
+                  </p>
+                </div>
+              );
+            }
             const correct = r?.isCorrect;
             const yourLabel =
               q.question_type === "mcq"
@@ -214,14 +272,14 @@ export function WorksheetRunner({
       </p>
       <h1 className="mb-1 text-2xl font-extrabold sm:text-3xl">{title}</h1>
       <p className="mb-4 text-sm text-slate-500">
-        Answer all {questions.length} questions, then check your score. Tap 🔊 to
-        hear a question read aloud.
+        Answer the questions, then check your score. Tap 🔊 to hear a question
+        read aloud. If a question looks wrong, tap ⚑ Report to skip it.
       </p>
 
       {/* sticky-ish progress */}
       <div className="mb-6">
         <div className="mb-1 flex justify-between text-xs font-semibold text-slate-500">
-          <span>{answeredCount} of {questions.length} answered</span>
+          <span>{answeredCount} of {required.length} answered</span>
           <span>{progress}%</span>
         </div>
         <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
@@ -234,63 +292,122 @@ export function WorksheetRunner({
 
       <div className="grid gap-4">
         {questions.map((q, idx) => {
-          const answered = (responses[q.id] ?? "").trim().length > 0;
+          const isReported = reported.has(q.id);
+          const answered = !isReported && (responses[q.id] ?? "").trim().length > 0;
+          const chipCls = isReported
+            ? "bg-amber-400 text-white"
+            : answered
+              ? "bg-indigo-500 text-white"
+              : "bg-slate-100 text-slate-600";
           return (
             <div
               key={q.id}
-              className={`overflow-hidden rounded-2xl border-2 bg-white transition ${
-                answered ? "border-indigo-300" : "border-slate-200"
+              className={`overflow-hidden rounded-2xl border-2 transition ${
+                isReported
+                  ? "border-amber-300 bg-amber-50"
+                  : answered
+                    ? "border-indigo-300 bg-white"
+                    : "border-slate-200 bg-white"
               }`}
             >
               <div className="flex items-start gap-3 p-5">
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
-                    answered ? "bg-indigo-500 text-white" : "bg-slate-100 text-slate-600"
-                  }`}
-                >
-                  {idx + 1}
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${chipCls}`}>
+                  {isReported ? "⚑" : idx + 1}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-lg font-bold text-slate-900">{q.prompt}</p>
-                    <ListenButton text={speakText(q)} className="shrink-0" />
+                    {!isReported && (
+                      <div className="flex shrink-0 items-center gap-2">
+                        <ListenButton text={speakText(q)} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReportingId(reportingId === q.id ? null : q.id);
+                            setReportText("");
+                          }}
+                          className="inline-flex h-9 items-center gap-1 rounded-full border border-slate-200 px-3 text-sm font-semibold text-slate-500 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
+                        >
+                          ⚑ Report
+                        </button>
+                      </div>
+                    )}
                   </div>
 
-                  {q.question_type === "mcq" && q.choices ? (
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      {q.choices.map((c, ci) => {
-                        const chosen = responses[q.id] === c.id;
-                        return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => setResponse(q.id, c.id)}
-                            className={`flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left text-base font-semibold transition ${
-                              chosen
-                                ? "border-indigo-500 bg-indigo-50 text-indigo-900"
-                                : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50"
-                            }`}
-                          >
-                            <span
-                              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
-                                chosen ? "bg-indigo-500 text-white" : "bg-slate-100 text-slate-600"
-                              }`}
-                            >
-                              {LETTERS[ci]}
-                            </span>
-                            {c.label}
-                          </button>
-                        );
-                      })}
+                  {isReported ? (
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-100/70 px-4 py-3 text-sm font-semibold text-amber-800">
+                      <span>⚑ Reported — you can skip this one. Thanks for the heads-up!</span>
+                      <button
+                        type="button"
+                        onClick={() => undoReport(q.id)}
+                        className="underline hover:text-amber-900"
+                      >
+                        Undo
+                      </button>
                     </div>
                   ) : (
-                    <Input
-                      className="mt-3 max-w-xs text-lg"
-                      inputMode="text"
-                      placeholder="Type your answer"
-                      value={responses[q.id] ?? ""}
-                      onChange={(e) => setResponse(q.id, e.target.value)}
-                    />
+                    <>
+                      {q.question_type === "mcq" && q.choices ? (
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          {q.choices.map((c, ci) => {
+                            const chosen = responses[q.id] === c.id;
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => setResponse(q.id, c.id)}
+                                className={`flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left text-base font-semibold transition ${
+                                  chosen
+                                    ? "border-indigo-500 bg-indigo-50 text-indigo-900"
+                                    : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50"
+                                }`}
+                              >
+                                <span
+                                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
+                                    chosen ? "bg-indigo-500 text-white" : "bg-slate-100 text-slate-600"
+                                  }`}
+                                >
+                                  {LETTERS[ci]}
+                                </span>
+                                {c.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <Input
+                          className="mt-3 max-w-xs text-lg"
+                          inputMode="text"
+                          placeholder="Type your answer"
+                          value={responses[q.id] ?? ""}
+                          onChange={(e) => setResponse(q.id, e.target.value)}
+                        />
+                      )}
+
+                      {reportingId === q.id && (
+                        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                          <label className="text-sm font-semibold text-amber-800">
+                            What looks wrong? (optional)
+                          </label>
+                          <textarea
+                            value={reportText}
+                            onChange={(e) => setReportText(e.target.value)}
+                            rows={2}
+                            maxLength={500}
+                            placeholder="e.g. None of the answers look correct"
+                            className="mt-1 w-full rounded-lg border border-amber-200 bg-white p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                          />
+                          <div className="mt-2 flex gap-2">
+                            <Button size="sm" onClick={() => sendReport(q.id)} disabled={reportBusy}>
+                              {reportBusy ? "Sending…" : "Send & skip"}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => setReportingId(null)}>
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -307,7 +424,8 @@ export function WorksheetRunner({
         </Button>
         {!allAnswered && (
           <p className="mt-2 text-sm text-slate-500">
-            Answer every question to check your score.
+            Answer every question (or report the ones that look wrong) to check
+            your score.
           </p>
         )}
       </div>

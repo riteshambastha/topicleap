@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AddChildForm } from "@/components/add-child-form";
 import { LogoutButton } from "@/components/logout-button";
 import { gradeLabel } from "@/lib/grade-label";
+import { Logo } from "@/components/logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function ParentDashboard() {
@@ -20,7 +21,10 @@ export default async function ParentDashboard() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
-        <span className="font-bold text-indigo-700">TopicLeap · Parent</span>
+        <span className="flex items-center gap-2">
+          <Logo iconClass="h-7 w-7" textClass="text-lg" />
+          <span className="text-sm font-semibold text-slate-400">· Parent</span>
+        </span>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-slate-500 sm:inline">
             {parent.email}

@@ -6,6 +6,7 @@ import { getProgress, isTopicComplete } from "@/lib/progress";
 import { getKidStats, firstName, fallbackSummary } from "@/lib/summary";
 import { gradeLabel } from "@/lib/grade-label";
 import { subjectGradient } from "@/lib/topic-icons";
+import { Logo } from "@/components/logo";
 import { LogoutButton } from "@/components/logout-button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -92,8 +93,9 @@ export default async function ProgressPage() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-white/60 bg-white/75 px-4 py-4 backdrop-blur sm:px-6">
-        <Link href="/learn" className="text-lg font-bold text-indigo-700">
-          ← TopicLeap
+        <Link href="/learn" className="inline-flex items-center gap-1.5" aria-label="Back to TopicLeap home">
+          <span className="text-slate-400">←</span>
+          <Logo iconClass="h-7 w-7" textClass="text-lg" />
         </Link>
         <div className="flex items-center gap-3">
           <span className="text-sm text-slate-500">Hi, {name}!</span>

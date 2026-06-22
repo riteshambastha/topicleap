@@ -27,7 +27,10 @@ export async function POST(
     );
   }
 
-  let body: { answers?: { questionId: string; response: string | null }[] };
+  let body: {
+    answers?: { questionId: string; response: string | null }[];
+    reported?: string[];
+  };
   try {
     body = await req.json();
   } catch {
@@ -35,21 +38,25 @@ export async function POST(
   }
   const submitted = body.answers ?? [];
   const responseByQ = new Map(submitted.map((a) => [a.questionId, a.response]));
+  const reportedSet = new Set(body.reported ?? []);
 
   const admin = createAdminClient();
 
-  const { data: questions, error: qErr } = await admin
+  const { data: allQuestions, error: qErr } = await admin
     .from("questions")
     .select("id, question_type, correct_answer, points, sort_order")
     .eq("worksheet_id", worksheetId)
     .order("sort_order");
 
-  if (qErr || !questions || questions.length === 0) {
+  if (qErr || !allQuestions || allQuestions.length === 0) {
     return NextResponse.json(
       { error: "Worksheet has no questions." },
       { status: 404 },
     );
   }
+
+  // Reported questions are skipped — excluded from scoring entirely.
+  const questions = allQuestions.filter((q) => !reportedSet.has(q.id));
 
   // Grade.
   const results: GradedQuestionResult[] = [];

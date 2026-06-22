@@ -9,6 +9,7 @@ import { topicIcon } from "@/lib/topic-icons";
 import { LogoutButton } from "@/components/logout-button";
 import { GlobalSearch, type SearchItem } from "@/components/global-search";
 import { GradeExplorer } from "@/components/grade-explorer";
+import { Logo } from "@/components/logo";
 
 type LessonStepLite = { title?: string; body?: string; prompt?: string };
 
@@ -99,7 +100,7 @@ export default async function LearnHome() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-white/60 bg-white/75 px-4 py-4 backdrop-blur sm:px-6">
-        <span className="text-lg font-bold text-indigo-700">TopicLeap</span>
+        <Logo iconClass="h-7 w-7" textClass="text-lg" />
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-slate-500 sm:inline">
             Hi, {child.display_name}! · {gradeLabel(child.grade_level)}
