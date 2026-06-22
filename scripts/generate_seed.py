@@ -1062,6 +1062,97 @@ def build_lesson_steps(name, teach, questions):
     return steps
 
 
+def _answer_label(q):
+    if q["type"] == "mcq":
+        return next(c["label"] for c in q["choices"] if c["id"] == q["answer"])
+    return str(q["answer"])
+
+
+def _check_step(q, title="Your turn"):
+    label = _answer_label(q)
+    return {
+        "type": "check",
+        "title": title,
+        "body": "Pick the best answer.",
+        "prompt": ascii_clean(q["prompt"]),
+        "choices": [{"id": c["id"], "label": ascii_clean(c["label"])} for c in q["choices"]],
+        "answer": q["answer"],
+        "explanation": ascii_clean(q.get("explanation") or f"Yes! The answer is \"{label}\"."),
+    }
+
+
+def build_rich_lesson_steps(name, teach, qs):
+    """A longer, swipeable lesson: intro -> worked examples -> 'your turn'
+    checks -> recap. Built from a fresh question set so examples differ from
+    the worksheets."""
+    steps = [{"type": "explain", "title": f"Let's learn: {name}",
+              "body": ascii_clean(teach)}]
+
+    mcqs = [q for q in qs if q["type"] == "mcq"]
+    fills = [q for q in qs if q["type"] == "fill_in"]
+
+    # 3 worked examples (prefer a spread of the topic's questions)
+    examples = qs[:3]
+    for i, ex in enumerate(examples, 1):
+        ans = _answer_label(ex)
+        body = f"Example {i}.  {ex['prompt']}\n\nThe answer is \"{ans}\"."
+        if ex.get("explanation"):
+            body += f"\n\n{ex['explanation']}"
+        steps.append({"type": "worked_example", "title": f"Worked example {i}",
+                      "body": ascii_clean(body)})
+
+    # interactive checks from MCQs not already shown as examples
+    used = {id(e) for e in examples}
+    check_pool = [q for q in mcqs if id(q) not in used]
+    checks = check_pool[:3]
+    for q in checks:
+        steps.append(_check_step(q))
+
+    # all-fill topics (e.g. arithmetic): no MCQ checks, so add more examples
+    if len(checks) < 2:
+        extra = [q for q in fills if id(q) not in used][3:6]
+        for j, ex in enumerate(extra, len(examples) + 1):
+            steps.append({"type": "worked_example", "title": f"Worked example {j}",
+                          "body": ascii_clean(f"Example {j}.  {ex['prompt']}\n\n"
+                                              f"The answer is {ex['answer']}.")})
+
+    steps.append({
+        "type": "explain",
+        "title": "You've got this!",
+        "body": ascii_clean(
+            f"Great work learning about {name}! Now tap a worksheet to practice "
+            f"and earn points. You can always come back to this lesson."
+        ),
+    })
+    return steps
+
+
+def emit_lesson_updates(grade, topics, subjects=SUBJECTS, qpt=QUESTIONS_PER_TOPIC):
+    """Emit UPDATE statements that replace existing lessons' steps with the
+    richer, longer version. Non-destructive and idempotent."""
+    out = []
+    p = out.append
+    label = "Kindergarten" if grade == 0 else f"Grade {grade}"
+    p("-- =====================================================================")
+    p(f"-- TopicLeap - richer lessons for {label} (UPDATE existing lessons)")
+    p("-- Replaces each lesson's steps with a longer, swipeable version.")
+    p("-- Non-destructive: only updates lessons.steps. Safe to re-run.")
+    p("-- =====================================================================\n")
+    for subj_slug, tslug, name, std, teach, source in topics:
+        rng = random.Random(f"lesson-g{grade}-{tslug}")
+        qs = make_questions(source, rng, max(qpt, 8))
+        steps = build_rich_lesson_steps(name, teach, qs)
+        steps_json = json.dumps(steps, ensure_ascii=True)
+        p(f"-- {subj_slug}: {name}")
+        p(f"update public.lessons set steps = {sql_str(steps_json)}::jsonb")
+        p("where topic_id in (select t.id from public.topics t "
+          "join public.subjects s on s.id = t.subject_id")
+        p(f"  where s.slug = {sql_str(subj_slug)} and t.slug = {sql_str(tslug)} "
+          f"and t.grade_level = {grade});")
+        p("")
+    return "\n".join(out)
+
+
 def emit_curriculum(grade, topics, subjects=SUBJECTS,
                     worksheet_size=WORKSHEET_SIZE, qpt=QUESTIONS_PER_TOPIC):
     """Emit an idempotent, non-destructive seed for one grade's curriculum."""
@@ -1089,7 +1180,9 @@ def emit_curriculum(grade, topics, subjects=SUBJECTS,
         torder = order_counter[subj_slug]
         rng = random.Random(f"g{grade}-{tslug}")
         questions = make_questions(source, rng, qpt)
-        steps = build_lesson_steps(name, teach, questions)
+        lesson_qs = make_questions(source, random.Random(f"lesson-g{grade}-{tslug}"),
+                                   max(qpt, 8))
+        steps = build_rich_lesson_steps(name, teach, lesson_qs)
         steps_json = json.dumps(steps, ensure_ascii=True)
         desc = teach
 
