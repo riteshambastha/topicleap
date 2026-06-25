@@ -33,6 +33,9 @@ elif grade == 5:
 elif grade == 6:
     from generate_grade6 import TOPICS6 as TOPICS
     QPT = 20
+elif grade == 7:
+    from generate_grade7 import TOPICS7 as TOPICS
+    QPT = 20
 else:
     raise SystemExit(f"No topic registry for grade {grade}")
 
