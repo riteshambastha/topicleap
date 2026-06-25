@@ -222,6 +222,17 @@ const TOPIC_ICONS: Record<string, string> = {
   "figurative-tone": "🎭",
   "compare-authors": "🔀",
   "plot-character-development": "📖",
+  // ----- Grade 8 additions (new math slugs only) -----
+  "exponent-rules": "🔢",
+  "scientific-notation": "🔬",
+  roots: "√",
+  "linear-equations": "🟰",
+  slope: "📈",
+  "pythagorean-theorem": "📐",
+  functions: "⚙️",
+  "volume-cylinders-cones": "🛢️",
+  "rational-irrational": "♾️",
+  "slope-intercept": "📉",
 };
 
 const SUBJECT_FALLBACK: Record<string, string> = {
