@@ -229,7 +229,7 @@ export default async function Home() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-white/70">
                   Progress
                 </p>
-                <p className="font-display mt-1 text-2xl font-extrabold">Hi, Maya! 🚀</p>
+                <p className="font-display mt-1 text-2xl font-extrabold">Hi, Tia!</p>
                 <p className="mt-2 text-sm text-white/90">
                   You&apos;ve earned 240 points across 9 worksheets with 88% accuracy —
                   amazing work! Keep practicing a little each day.
@@ -292,6 +292,7 @@ export default async function Home() {
             <a href="#how" className="hover:text-indigo-700">How it works</a>
             <a href="#subjects" className="hover:text-indigo-700">Subjects</a>
             <a href="#features" className="hover:text-indigo-700">Features</a>
+            <Link href="/feedback" className="hover:text-indigo-700">Feedback</Link>
             <Link href="/login" className="hover:text-indigo-700">Log in</Link>
             <Link href="/signup" className="hover:text-indigo-700">Sign up</Link>
           </div>

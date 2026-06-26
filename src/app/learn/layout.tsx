@@ -4,6 +4,7 @@
  * disabled automatically for users who prefer reduced motion.
  */
 import { SoundToggle } from "@/components/sound-toggle";
+import { AppFooter } from "@/components/app-footer";
 
 export default function LearnLayout({
   children,
@@ -50,6 +51,7 @@ export default function LearnLayout({
       </div>
 
       {children}
+      <AppFooter />
     </div>
   );
 }
