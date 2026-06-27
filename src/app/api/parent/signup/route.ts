@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { captureReferral } from "@/lib/referrals";
 
 /**
  * Create the parent root account. We use the admin client with
@@ -7,7 +8,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * confirmation step needed for the M1 demo).
  */
 export async function POST(req: Request) {
-  let body: { email?: string; password?: string; displayName?: string };
+  let body: {
+    email?: string;
+    password?: string;
+    displayName?: string;
+    ref?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -47,16 +53,33 @@ export async function POST(req: Request) {
     );
   }
 
-  const { error: rowErr } = await admin.from("parents").insert({
-    auth_user_id: created.user.id,
-    email,
-    display_name: displayName,
-  });
+  const { data: parentRow, error: rowErr } = await admin
+    .from("parents")
+    .insert({
+      auth_user_id: created.user.id,
+      email,
+      display_name: displayName,
+    })
+    .select("id")
+    .single();
 
-  if (rowErr) {
+  if (rowErr || !parentRow) {
     // Roll back the auth user so the email can be reused.
     await admin.auth.admin.deleteUser(created.user.id);
-    return NextResponse.json({ error: rowErr.message }, { status: 400 });
+    return NextResponse.json(
+      { error: rowErr?.message ?? "Could not create account." },
+      { status: 400 },
+    );
+  }
+
+  // Record a pending referral if they arrived via an invite link.
+  // Never block signup on referral bookkeeping.
+  if (body.ref) {
+    try {
+      await captureReferral(parentRow.id, body.ref);
+    } catch {
+      /* ignore — referral is best-effort */
+    }
   }
 
   return NextResponse.json({ ok: true });

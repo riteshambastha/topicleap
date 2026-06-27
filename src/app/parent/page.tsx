@@ -29,6 +29,12 @@ export default async function ParentDashboard() {
           <span className="hidden text-sm text-slate-500 sm:inline">
             {parent.email}
           </span>
+          <Link
+            href="/parent/refer"
+            className="rounded-xl bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+          >
+            🎁 Invite friends
+          </Link>
           <LogoutButton />
         </div>
       </header>

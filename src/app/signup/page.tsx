@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -16,6 +16,22 @@ export default function ParentSignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [ref, setRef] = useState<string | null>(null);
+
+  // Capture an invite code from ?ref= (or a previously-stored cookie) and
+  // remember it for 30 days so it survives navigation before signup.
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("ref");
+    const fromCookie = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith("tl_ref="))
+      ?.split("=")[1];
+    const code = (fromUrl || fromCookie || "").toUpperCase().trim();
+    if (code) {
+      setRef(code);
+      document.cookie = `tl_ref=${code}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
+    }
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +41,7 @@ export default function ParentSignupPage() {
     const res = await fetch("/api/parent/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, displayName }),
+      body: JSON.stringify({ email, password, displayName, ref }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -55,6 +71,12 @@ export default function ParentSignupPage() {
           <CardTitle>Create a parent account</CardTitle>
         </CardHeader>
         <CardContent>
+          {ref && (
+            <div className="mb-4 rounded-xl bg-fuchsia-50 px-4 py-3 text-sm font-medium text-fuchsia-700 ring-1 ring-fuchsia-100">
+              🎁 You were invited by a friend! Add a learner after signing up
+              and you&apos;ll both earn bonus points.
+            </div>
+          )}
           <form onSubmit={onSubmit} className="grid gap-4">
             <div className="grid gap-1.5">
               <Label htmlFor="name">Your name</Label>

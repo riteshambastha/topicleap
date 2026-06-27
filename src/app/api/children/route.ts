@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentParent } from "@/lib/auth";
+import { processReferralsOnChildAdded } from "@/lib/referrals";
 
 /** Synthetic email used internally for a kid's auth.users row. */
 function kidEmail(username: string) {
@@ -84,6 +85,14 @@ export async function POST(req: Request) {
   if (rowErr) {
     await admin.auth.admin.deleteUser(created.user.id);
     return NextResponse.json({ error: rowErr.message }, { status: 400 });
+  }
+
+  // Settle any pending referral now that this family has a learner.
+  // Best-effort: never fail child creation on referral bookkeeping.
+  try {
+    await processReferralsOnChildAdded(parent.id);
+  } catch {
+    /* ignore */
   }
 
   return NextResponse.json({ ok: true, username });
